@@ -46,6 +46,11 @@ export default function Leaderboard() {
                       My Profile
                     </Button>
                   </Link>
+                  <Link href="/import">
+                    <Button variant="outline" className="uppercase font-bold">
+                      Import Data
+                    </Button>
+                  </Link>
                   <Button
                     variant="outline"
                     onClick={() => logout()}
