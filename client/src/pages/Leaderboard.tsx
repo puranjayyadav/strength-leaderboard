@@ -9,7 +9,7 @@ import { Trophy, LogIn, LogOut } from "lucide-react";
 import { getLoginUrl } from "@/const";
 
 export default function Leaderboard() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, loading } = useAuth();
   const [sortBy, setSortBy] = useState<"total" | "squat" | "bench" | "deadlift" | "ohp">("total");
 
   const { data: athletes = [], isLoading } = trpc.leaderboard.getByExercise.useQuery({
@@ -39,7 +39,7 @@ export default function Leaderboard() {
               </p>
             </div>
             <div className="flex gap-3">
-              {isAuthenticated ? (
+              {loading ? null : isAuthenticated ? (
                 <>
                   <Link href="/profile">
                     <Button className="btn-dramatic">

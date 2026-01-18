@@ -41,3 +41,6 @@
 - [x] Fix "MY PROFILE" button navigation when not authenticated
 - [x] Ensure athlete profile page loads and displays correctly
 - [x] Add authentication state handling in header
+
+## Current Issues
+- [x] Fix login button showing even after authentication
