@@ -5,10 +5,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { Link } from "wouter";
-import { Trophy, TrendingUp } from "lucide-react";
+import { Trophy, LogIn, LogOut } from "lucide-react";
+import { getLoginUrl } from "@/const";
 
 export default function Leaderboard() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const [sortBy, setSortBy] = useState<"total" | "squat" | "bench" | "deadlift" | "ohp">("total");
 
   const { data: athletes = [], isLoading } = trpc.leaderboard.getByExercise.useQuery({
@@ -37,13 +38,32 @@ export default function Leaderboard() {
                 Track the elite. Dominate the rankings.
               </p>
             </div>
-            {isAuthenticated && (
-              <Link href="/profile">
-                <Button className="btn-dramatic">
-                  My Profile
-                </Button>
-              </Link>
-            )}
+            <div className="flex gap-3">
+              {isAuthenticated ? (
+                <>
+                  <Link href="/profile">
+                    <Button className="btn-dramatic">
+                      My Profile
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    onClick={() => logout()}
+                    className="uppercase font-bold"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <a href={getLoginUrl()}>
+                  <Button className="btn-dramatic">
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Login
+                  </Button>
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </div>

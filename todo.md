@@ -35,3 +35,9 @@
 - [ ] Test admin import functionality
 - [x] Verify responsive design across devices
 - [ ] Create checkpoint and prepare for deployment
+
+## Bug Fixes
+- [x] Add visible login button to header/navigation
+- [x] Fix "MY PROFILE" button navigation when not authenticated
+- [x] Ensure athlete profile page loads and displays correctly
+- [x] Add authentication state handling in header
