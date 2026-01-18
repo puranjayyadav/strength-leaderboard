@@ -44,3 +44,6 @@
 
 ## Current Issues
 - [x] Fix login button showing even after authentication
+
+## Mobile Improvements
+- [x] Show full exercise names on mobile tabs instead of just icons

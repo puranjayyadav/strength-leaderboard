@@ -78,10 +78,10 @@ export default function Leaderboard() {
                 <TabsTrigger
                   key={ex.id}
                   value={ex.id}
-                  className="uppercase font-bold text-sm data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
+                  className="uppercase font-bold text-xs sm:text-sm data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
                 >
                   <span className="mr-1">{ex.icon}</span>
-                  <span className="hidden sm:inline">{ex.label}</span>
+                  <span>{ex.label}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
