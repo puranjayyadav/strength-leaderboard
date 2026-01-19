@@ -184,9 +184,9 @@ export default function Leaderboard() {
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
-                            <Avatar className="w-8 h-8 border border-accent/20">
+                            <Avatar className="w-12 h-12 border-2 border-accent/20">
                               <AvatarImage src={athlete.avatarUrl || ""} />
-                              <AvatarFallback className="bg-muted text-[10px] font-black">{athlete.name.charAt(0)}</AvatarFallback>
+                              <AvatarFallback className="bg-muted text-sm font-black">{athlete.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div className="font-bold text-foreground group-hover:text-accent transition-colors">
                               {athlete.name}
