@@ -2,7 +2,7 @@ import { eq, and, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pkg from 'pg';
 const { Pool } = pkg;
-import { User, InsertUser, users, athletes, InsertAthlete, weightEntries, InsertWeightEntry, liftRecords, InsertLiftRecord, gyms, Gym, InsertGym } from "../drizzle/schema";
+import { User, InsertUser, users, athletes, InsertAthlete, weightEntries, InsertWeightEntry, liftRecords, InsertLiftRecord, gyms, Gym, InsertGym, gymRequests, InsertGymRequest } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 let _pool: InstanceType<typeof Pool> | null = null;
@@ -264,6 +264,18 @@ export async function getGymByInviteCode(inviteCode: string) {
 export async function createGym(data: InsertGym) {
   const db = await getDb();
   if (!db) return undefined;
+
+  // Ensure slug exists
+  if (!data.slug) {
+    data.slug = data.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+  }
+
+  // Ensure invite code exists
+  if (!data.inviteCode) {
+    const prefix = (data.name.match(/[A-Z]/g) || data.name.substring(0, 3).toUpperCase().split('')).slice(0, 3).join('').toUpperCase().padEnd(3, 'X');
+    data.inviteCode = `${prefix}${Math.floor(100 + Math.random() * 899)}`;
+  }
+
   const result = await db.insert(gyms).values(data).returning();
   return result[0];
 }
@@ -307,4 +319,44 @@ export async function syncUserAthlete(user: User): Promise<User> {
 
   // WE NO LONGER AUTO-CREATE. The user will be prompted on the frontend.
   return user;
+}
+
+// Gym requests
+export async function requestGymAdd(data: InsertGymRequest) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.insert(gymRequests).values(data).returning();
+  return result[0];
+}
+
+export async function getAllGymRequests() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(gymRequests).orderBy(desc(gymRequests.createdAt));
+}
+
+export async function getGymRequestById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(gymRequests).where(eq(gymRequests.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateGymRequestStatus(id: number, status: 'pending' | 'approved' | 'rejected') {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(gymRequests).set({ status, updatedAt: new Date() }).where(eq(gymRequests.id, id));
+}
+
+// Admin / User Management
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(users).orderBy(desc(users.createdAt));
+}
+
+export async function updateUserRole(userId: number, role: 'user' | 'admin') {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ role, updatedAt: new Date() }).where(eq(users.id, userId));
 }

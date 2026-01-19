@@ -10,6 +10,7 @@ import { Trophy, Save, ChevronRight, Camera, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Onboarding() {
     const { user } = useAuth();
@@ -56,19 +57,26 @@ export default function Onboarding() {
     });
 
     const joinGymMutation = trpc.gym.join.useMutation();
-    const createGymMutation = trpc.gym.create.useMutation();
     const { data: gyms = [] } = trpc.gym.getAll.useQuery();
 
-    const [isCreatingGym, setIsCreatingGym] = useState(false);
-    const [newGym, setNewGym] = useState({ name: "", inviteCode: "", slug: "" });
+    const [isRequestingGym, setIsRequestingGym] = useState(false);
+    const [requestedGymName, setRequestedGymName] = useState("");
 
-    const handleCreateGym = async () => {
+    const requestGymMutation = trpc.gym.requestAdd.useMutation();
+
+
+
+    const handleRequestGym = async () => {
+        if (!requestedGymName) return;
         try {
-            await createGymMutation.mutateAsync(newGym);
+            const newGym: any = await requestGymMutation.mutateAsync({ name: requestedGymName });
             toast.success("Gym Space created!");
-            setIsCreatingGym(false);
-            setFormData(prev => ({ ...prev, gymInviteCode: newGym.inviteCode }));
-            setStep(4);
+            if (newGym?.inviteCode) {
+                setFormData(prev => ({ ...prev, gymInviteCode: newGym.inviteCode }));
+            }
+            setRequestedGymName("");
+            setIsRequestingGym(false);
+            setStep(4); // Move to review step
         } catch (e: any) {
             toast.error(e.message || "Failed to create gym");
         }
@@ -289,7 +297,7 @@ export default function Onboarding() {
                                 </p>
 
                                 <div className="space-y-6">
-                                    {!isCreatingGym ? (
+                                    {!isRequestingGym ? (
                                         <div className="space-y-4">
                                             <div
                                                 className="p-4 bg-accent/10 border-2 border-accent/20 rounded-lg cursor-pointer hover:border-accent group transition-all"
@@ -300,6 +308,27 @@ export default function Onboarding() {
                                             >
                                                 <h3 className="font-black uppercase text-accent group-hover:scale-105 transition-transform origin-left">Join Fitness Factory</h3>
                                                 <p className="text-[10px] text-muted-foreground uppercase font-bold italic">The default shared community space.</p>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label className="text-[10px] uppercase font-bold text-muted-foreground">Select from existing gyms</Label>
+                                                <Select
+                                                    onValueChange={(code: string) => {
+                                                        setFormData(prev => ({ ...prev, gymInviteCode: code }));
+                                                        setStep(4);
+                                                    }}
+                                                >
+                                                    <SelectTrigger className="w-full bg-card/50 border-border h-12 uppercase font-black text-xs">
+                                                        <SelectValue placeholder="CHOOSE A GYM" />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="bg-card border-border">
+                                                        {gyms.map(gym => (
+                                                            <SelectItem key={gym.id} value={gym.inviteCode} className="font-bold uppercase text-xs">
+                                                                🏟️ {gym.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                             </div>
 
                                             <div className="space-y-2">
@@ -317,9 +346,9 @@ export default function Onboarding() {
                                                 <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest"><span className="bg-card px-2 text-accent italic">OR</span></div>
                                             </div>
 
-                                            <div className="flex flex-col gap-3">
-                                                <Button type="button" variant="outline" className="w-full h-12 uppercase font-black italic tracking-widest" onClick={() => setIsCreatingGym(true)}>
-                                                    Create New Space
+                                            <div className="flex flex-col gap-3 text-center">
+                                                <Button type="button" variant="outline" className="w-full h-12 uppercase font-black italic tracking-widest" onClick={() => setIsRequestingGym(true)}>
+                                                    Request New Space
                                                 </Button>
                                                 <Button type="button" variant="ghost" className="w-full text-muted-foreground underline text-[10px] uppercase font-bold" onClick={() => {
                                                     setFormData(prev => ({ ...prev, gymInviteCode: "" }));
@@ -331,37 +360,35 @@ export default function Onboarding() {
                                         </div>
                                     ) : (
                                         <div className="space-y-4">
+                                            <h3 className="text-[10px] font-black text-accent uppercase tracking-widest">Request a New Gym Space</h3>
                                             <div className="space-y-2">
                                                 <Label className="text-[10px] uppercase font-bold text-muted-foreground">Gym Name</Label>
                                                 <Input
-                                                    placeholder="e.g. Hoboken Barbell"
-                                                    value={newGym.name}
-                                                    onChange={(e) => {
-                                                        const name = e.target.value;
-                                                        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                                                        setNewGym(prev => ({ ...prev, name, slug }));
-                                                    }}
+                                                    placeholder="e.g. Iron Palace"
+                                                    value={requestedGymName}
+                                                    onChange={(e) => setRequestedGymName(e.target.value)}
                                                     className="bg-card/50 border-border h-12"
                                                 />
                                             </div>
-                                            <div className="space-y-2">
-                                                <Label className="text-[10px] uppercase font-bold text-muted-foreground">Invite Code</Label>
-                                                <Input
-                                                    placeholder="Choose a unique code"
-                                                    value={newGym.inviteCode}
-                                                    onChange={(e) => setNewGym(prev => ({ ...prev, inviteCode: e.target.value.toUpperCase() }))}
-                                                    className="bg-card/50 border-border h-12"
-                                                />
-                                            </div>
+                                            <p className="text-[10px] text-muted-foreground italic leading-tight">
+                                                Submit the name of the gym you'd like to see added. An admin will review and add it to the database.
+                                            </p>
                                             <div className="flex gap-4 pt-4">
-                                                <Button type="button" className="btn-dramatic flex-1 h-12 uppercase font-black italic" onClick={handleCreateGym} disabled={!newGym.name || !newGym.inviteCode}>Create</Button>
-                                                <Button type="button" variant="outline" className="flex-1 h-12 uppercase font-black" onClick={() => setIsCreatingGym(false)}>Back</Button>
+                                                <Button
+                                                    type="button"
+                                                    className="btn-dramatic flex-1 h-12 uppercase font-black italic"
+                                                    onClick={handleRequestGym}
+                                                    disabled={!requestedGymName || requestGymMutation.isPending}
+                                                >
+                                                    {requestGymMutation.isPending ? "Sending..." : "Submit Request"}
+                                                </Button>
+                                                <Button type="button" variant="outline" className="flex-1 h-12 uppercase font-black" onClick={() => setIsRequestingGym(false)}>Back</Button>
                                             </div>
                                         </div>
                                     )}
                                 </div>
 
-                                {!isCreatingGym && (
+                                {!isRequestingGym && (
                                     <div className="flex gap-4 pt-8">
                                         <Button type="button" variant="outline" className="flex-1 h-14 uppercase font-bold" onClick={() => setStep(2)}>Back</Button>
                                         <Button type="button" className="flex-[2] btn-dramatic h-14 text-lg" onClick={() => setStep(4)} disabled={!formData.gymInviteCode}>
@@ -384,7 +411,9 @@ export default function Onboarding() {
                                         </div>
                                         <div className="flex justify-between items-center border-b border-border pb-2">
                                             <span className="text-muted-foreground text-[10px] uppercase font-black tracking-widest">Gym Space</span>
-                                            <span className="font-black text-accent uppercase italic">{formData.gymInviteCode || "Global Only"}</span>
+                                            <span className="font-black text-accent uppercase italic">
+                                                {gyms.find(g => g.inviteCode === formData.gymInviteCode)?.name || (formData.gymInviteCode || "Global Only")}
+                                            </span>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4 pt-4">
                                             <div className="text-center p-3 bg-card border border-border rounded-lg">

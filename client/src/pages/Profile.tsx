@@ -7,7 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { ArrowLeft, Edit2, Save, X, Plus, TrendingUp, History, Camera, Upload, MapPin } from "lucide-react";
+import { ArrowLeft, Edit2, Save, X, Plus, TrendingUp, History, Camera, Upload, MapPin, ShieldCheck, Users, Search } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,6 +22,17 @@ export default function Profile() {
   const [uploading, setUploading] = useState(false);
   const [isAddingLift, setIsAddingLift] = useState(false);
   const [selectedAthleteId, setSelectedAthleteId] = useState<number | null>(null);
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+
+  const { data: allUsers = [], refetch: refetchUsers } = trpc.admin.listUsers.useQuery(undefined, {
+    enabled: user?.role === 'admin'
+  });
+  const { data: gymRequests = [], refetch: refetchGymRequests } = trpc.admin.listGymRequests.useQuery(undefined, {
+    enabled: user?.role === 'admin'
+  });
+
+  const setUserRoleMutation = trpc.admin.setUserRole.useMutation();
+  const updateGymRequestMutation = trpc.admin.updateGymRequestStatus.useMutation();
 
   // If user has athleteId linked, use that, otherwise show selection OR allow them to create/link
   const athleteId = user?.athleteId || selectedAthleteId;
@@ -62,8 +73,10 @@ export default function Profile() {
   const addLiftMutation = trpc.athlete.addLift.useMutation();
   const addWeightMutation = trpc.athlete.addWeight.useMutation();
   const joinGymMutation = trpc.gym.join.useMutation();
+  const leaveGymMutation = trpc.gym.leave.useMutation();
 
   const [gymInviteCode, setGymInviteCode] = useState("");
+  const [isChangingGym, setIsChangingGym] = useState(false);
   const { data: gym } = trpc.gym.getById.useQuery(
     { id: athlete?.gymId || 0 },
     { enabled: !!athlete?.gymId }
@@ -74,9 +87,22 @@ export default function Profile() {
       await joinGymMutation.mutateAsync({ inviteCode: gymInviteCode });
       toast.success("Joined Gym Space!");
       setGymInviteCode("");
+      setIsChangingGym(false);
       refetchAthlete();
     } catch (e: any) {
       toast.error(e.message || "Failed to join gym");
+    }
+  };
+
+  const handleLeaveGym = async () => {
+    if (!confirm("Are you sure you want to leave this Gym Space?")) return;
+    try {
+      await leaveGymMutation.mutateAsync();
+      toast.success("Left Gym Space");
+      refetchAthlete();
+      setIsChangingGym(false);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to leave gym");
     }
   };
 
@@ -137,6 +163,33 @@ export default function Profile() {
       console.error("Failed to add weight entry:", error);
     }
   };
+
+  const handleSetRole = async (userId: number, role: 'user' | 'admin') => {
+    try {
+      await setUserRoleMutation.mutateAsync({ userId, role });
+      toast.success(`User role updated to ${role}`);
+      refetchUsers();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to update role");
+    }
+  };
+
+  const handleUpdateRequest = async (id: number, status: 'approved' | 'rejected') => {
+    try {
+      await updateGymRequestMutation.mutateAsync({ id, status });
+      toast.success(`Request ${status}`);
+      refetchGymRequests();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to update request");
+    }
+  };
+
+  const filteredUsers = useMemo(() => {
+    return allUsers.filter(u =>
+      u.name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+      u.email?.toLowerCase().includes(userSearchTerm.toLowerCase())
+    );
+  }, [allUsers, userSearchTerm]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -466,7 +519,7 @@ export default function Profile() {
           <div className="lg:col-span-1">
             <Card className="card-dramatic p-6 h-full">
               <h3 className="text-xs uppercase font-black text-accent tracking-widest mb-6">Your Gym Space</h3>
-              {gym ? (
+              {(gym && !isChangingGym) ? (
                 <div className="space-y-6">
                   <div className="p-4 bg-accent/5 border-2 border-accent/20 rounded-lg">
                     <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Affiliated With</p>
@@ -478,12 +531,35 @@ export default function Profile() {
                       </div>
                     </div>
                   </div>
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      className="flex-1 uppercase font-black text-[10px] border-accent/20 text-accent hover:bg-accent/10"
+                      onClick={() => setIsChangingGym(true)}
+                    >
+                      Change Gym
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="flex-1 uppercase font-black text-[10px] text-destructive hover:bg-destructive/10"
+                      onClick={handleLeaveGym}
+                    >
+                      Leave
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-6">
-                  <p className="text-xs text-muted-foreground font-bold uppercase italic leading-relaxed">
-                    You are currently a solo lifter. Join a gym space to compete with your team.
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground font-bold uppercase italic leading-relaxed">
+                      {isChangingGym ? "Join a new gym space" : "You are currently a solo lifter. Join a gym space to compete with your team."}
+                    </p>
+                    {isChangingGym && (
+                      <button onClick={() => setIsChangingGym(false)} className="text-muted-foreground hover:text-white">
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                   <div className="space-y-3">
                     <Label className="text-[10px] uppercase font-black text-accent tracking-widest block">Invite Code</Label>
                     <div className="flex gap-2">
@@ -639,6 +715,132 @@ export default function Profile() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {user?.role === 'admin' && (
+          <div className="mt-12 pt-12 border-t border-border animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <h2 className="text-2xl font-black uppercase mb-8 flex items-center gap-3">
+              <ShieldCheck className="w-8 h-8 text-accent" />
+              Admin Portal
+            </h2>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card className="card-dramatic p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-accent">User Management</h3>
+                  <div className="relative w-48">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-accent" />
+                    <Input
+                      placeholder="Find athletes..."
+                      className="pl-9 h-8 text-[10px] bg-card/50 border-accent/10 focus:border-accent/40"
+                      value={userSearchTerm}
+                      onChange={(e) => setUserSearchTerm(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                  {filteredUsers.map(u => (
+                    <div key={u.id} className="flex items-center justify-between p-3 bg-accent/5 border border-accent/10 rounded-lg hover:border-accent/30 transition-all">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-8 h-8 border border-accent/20">
+                          <AvatarFallback className="text-[10px] font-black uppercase">{u.name?.charAt(0) || "?"}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-bold uppercase text-xs">{u.name || "Anonymous"}</p>
+                          <p className="text-[8px] text-muted-foreground lowercase">{u.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${u.role === 'admin' ? 'bg-accent text-black' : 'bg-muted/50 text-muted-foreground'}`}>
+                          {u.role}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-[8px] uppercase font-black px-2 border-accent/20 hover:bg-accent hover:text-black transition-all"
+                          onClick={() => handleSetRole(u.id, u.role === 'admin' ? 'user' : 'admin')}
+                          disabled={u.id === user.id}
+                        >
+                          {u.role === 'admin' ? "Demote" : "Promote"}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  {filteredUsers.length === 0 && (
+                    <p className="text-center text-xs text-muted-foreground italic py-8">No users found.</p>
+                  )}
+                </div>
+              </Card>
+
+              <Card className="card-dramatic p-6">
+                <h3 className="text-xs font-black uppercase tracking-widest text-accent mb-6">Gym Addition Requests</h3>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                  {gymRequests.map(req => (
+                    <div key={req.id} className="p-3 bg-accent/5 border border-accent/10 rounded-lg">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="font-bold uppercase text-xs">{req.name}</p>
+                          <p className="text-[8px] text-muted-foreground">Requested {new Date(req.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${req.status === 'approved' ? 'bg-green-500/20 text-green-500' :
+                            req.status === 'rejected' ? 'bg-red-500/20 text-red-500' : 'bg-yellow-500/20 text-yellow-500'
+                          }`}>
+                          {req.status}
+                        </span>
+                      </div>
+                      {req.status === 'pending' && (
+                        <div className="flex gap-2 mt-4">
+                          <Button
+                            size="sm"
+                            className="h-7 text-[8px] uppercase font-black bg-green-600 hover:bg-green-700 text-white transition-all flex-1"
+                            onClick={() => handleUpdateRequest(req.id, 'approved')}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-[8px] uppercase font-black border-red-500/50 text-red-500 hover:bg-red-500/10 transition-all flex-1"
+                            onClick={() => handleUpdateRequest(req.id, 'rejected')}
+                          >
+                            Reject
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {gymRequests.length === 0 && (
+                    <p className="text-center text-xs text-muted-foreground italic py-8">No gym requests.</p>
+                  )}
+                </div>
+              </Card>
+
+              <div className="lg:col-span-2">
+                <Card className="card-dramatic p-6 relative overflow-hidden group">
+                  <div className="absolute -right-4 -top-4 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
+                    <ShieldCheck className="w-32 h-32" />
+                  </div>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-accent mb-6">System Status</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-4">
+                      <p className="text-xs text-muted-foreground leading-relaxed italic">
+                        Use this portal to manage the strength community. Promote dedicated lifters and review gym requests.
+                      </p>
+                    </div>
+                    <div className="p-4 bg-black/40 border border-accent/10 rounded-lg">
+                      <p className="text-[10px] text-accent font-black uppercase mb-1">Session</p>
+                      <p className="text-[10px] text-muted-foreground tracking-tighter">System Version: 1.0.2-admin</p>
+                      <p className="text-[10px] text-muted-foreground tracking-tighter">Connected as: {user.name}</p>
+                    </div>
+                    <div className="p-4 bg-black/40 border border-accent/10 rounded-lg flex items-center justify-center">
+                      <ShieldCheck className="w-8 h-8 text-accent animate-pulse" />
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

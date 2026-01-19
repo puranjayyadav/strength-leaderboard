@@ -5,18 +5,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
 import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Trophy, LogIn, LogOut, ArrowUpDown } from "lucide-react";
+import { Trophy, LogIn, LogOut, ArrowUpDown, MapPin } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin } from "lucide-react";
 // getLoginUrl removed
 
 export default function Leaderboard() {
   const { user, isAuthenticated, logout, loading } = useAuth();
   const [sortBy, setSortBy] = useState<"total" | "squat" | "bench" | "deadlift" | "ohp">("total");
   const [selectedGymId, setSelectedGymId] = useState<number | undefined>(undefined);
+  const [hasSetInitialGym, setHasSetInitialGym] = useState(false);
 
   const { data: gyms = [] } = trpc.gym.getAll.useQuery();
   const { data: athletes = [], isLoading } = trpc.leaderboard.getByExercise.useQuery({
@@ -26,14 +26,17 @@ export default function Leaderboard() {
 
   const { data: athlete } = trpc.athlete.getById.useQuery(
     { id: (user as any)?.athleteId || 0 },
-    { enabled: !!(user as any)?.athleteId && selectedGymId === undefined }
+    { enabled: !!(user as any)?.athleteId && !hasSetInitialGym }
   );
 
   useEffect(() => {
-    if (athlete?.gymId && selectedGymId === undefined) {
-      setSelectedGymId(athlete.gymId);
+    if (athlete && !hasSetInitialGym) {
+      if (athlete.gymId) {
+        setSelectedGymId(athlete.gymId);
+      }
+      setHasSetInitialGym(true);
     }
-  }, [athlete?.gymId, selectedGymId]);
+  }, [athlete, hasSetInitialGym]);
 
   const exercises = [
     { id: "total", label: "Total", icon: "🏆" },
@@ -63,7 +66,7 @@ export default function Leaderboard() {
             <div className="flex flex-col md:flex-row gap-3 items-center">
               <Select
                 value={selectedGymId?.toString() || "global"}
-                onValueChange={(val) => setSelectedGymId(val === "global" ? undefined : parseInt(val))}
+                onValueChange={(val: string) => setSelectedGymId(val === "global" ? undefined : parseInt(val))}
               >
                 <SelectTrigger className="w-[200px] bg-card/50 border-accent/20 font-bold uppercase text-xs h-10">
                   <SelectValue placeholder="Select Space" />

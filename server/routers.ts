@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
 import { User, InsertUser, users, athletes, InsertAthlete, weightEntries, InsertWeightEntry, liftRecords, InsertLiftRecord } from "../drizzle/schema";
-import { getAllAthletes, getAthleteById, getLiftRecordsForAthlete, getWeightEntriesForAthlete, addLiftRecord, addWeightEntry, updateLiftRecord, updateAthlete, getLeaderboardByExercise, importAthlete, enforceAthleteOwnership, linkUserToAthlete, getAllGyms, getGymById, getGymBySlug, getGymByInviteCode, createGym, updateAthleteGym } from "./db";
+import { getAllAthletes, getAthleteById, getLiftRecordsForAthlete, getWeightEntriesForAthlete, addLiftRecord, addWeightEntry, updateLiftRecord, updateAthlete, getLeaderboardByExercise, importAthlete, enforceAthleteOwnership, linkUserToAthlete, getAllGyms, getGymById, getGymBySlug, getGymByInviteCode, createGym, updateAthleteGym, getAllUsers, updateUserRole, requestGymAdd, getAllGymRequests, updateGymRequestStatus, getGymRequestById } from "./db";
 
 export const appRouter = router({
   system: router({
@@ -60,6 +60,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user) throw new Error("Unauthorized");
+        if (ctx.user.role !== 'admin') throw new Error("Unauthorized: Only admins can create gyms directly");
         const gym = await createGym({
           ...input,
           createdBy: ctx.user.id,
@@ -70,6 +71,87 @@ export const appRouter = router({
         }
 
         return gym;
+      }),
+
+    leave: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        if (!ctx.user || !ctx.user.athleteId) throw new Error("No athlete profile found");
+        await updateAthleteGym(ctx.user.athleteId, null);
+        return { success: true };
+      }),
+
+    requestAdd: protectedProcedure
+      .input(z.object({ name: z.string(), location: z.string().optional() }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user) throw new Error("Unauthorized");
+
+        // The user requested that gyms are directly added.
+        // We create the gym immediately and record the request as approved.
+        const slug = input.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+        const prefix = (input.name.match(/[A-Z]/g) || input.name.substring(0, 3).toUpperCase().split('')).slice(0, 3).join('').toUpperCase().padEnd(3, 'X');
+        const inviteCode = `${prefix}${Math.floor(100 + Math.random() * 899)}`;
+
+        const gym = await createGym({
+          name: input.name,
+          slug,
+          inviteCode,
+          createdBy: ctx.user.id,
+        });
+
+        if (gym) {
+          await requestGymAdd({
+            name: input.name,
+            location: input.location,
+            requestedBy: ctx.user.id,
+            status: 'approved'
+          });
+
+          if (ctx.user.athleteId) {
+            await updateAthleteGym(ctx.user.athleteId, gym.id);
+          }
+        }
+
+        return gym;
+      }),
+  }),
+
+  admin: router({
+    listUsers: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user?.role !== 'admin') throw new Error("Unauthorized");
+      return getAllUsers();
+    }),
+    setUserRole: protectedProcedure
+      .input(z.object({ userId: z.number(), role: z.enum(['user', 'admin']) }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user?.role !== 'admin') throw new Error("Unauthorized");
+        return updateUserRole(input.userId, input.role);
+      }),
+    listGymRequests: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user?.role !== 'admin') throw new Error("Unauthorized");
+      return getAllGymRequests();
+    }),
+    updateGymRequestStatus: protectedProcedure
+      .input(z.object({ id: z.number(), status: z.enum(['pending', 'approved', 'rejected']) }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user?.role !== 'admin') throw new Error("Unauthorized");
+
+        if (input.status === 'approved') {
+          const req = await getGymRequestById(input.id);
+          if (req && req.status !== 'approved') {
+            const slug = req.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+            const prefix = (req.name.match(/[A-Z]/g) || req.name.substring(0, 3).toUpperCase().split('')).slice(0, 3).join('').toUpperCase().padEnd(3, 'X');
+            const inviteCode = `${prefix}${Math.floor(100 + Math.random() * 899)}`;
+
+            await createGym({
+              name: req.name,
+              slug,
+              inviteCode,
+              createdBy: req.requestedBy,
+            });
+          }
+        }
+
+        return updateGymRequestStatus(input.id, input.status as any);
       }),
   }),
 

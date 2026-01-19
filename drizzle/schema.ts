@@ -115,3 +115,19 @@ export const liftRecords = pgTable("liftRecords", {
 
 export type LiftRecord = typeof liftRecords.$inferSelect;
 export type InsertLiftRecord = typeof liftRecords.$inferInsert;
+
+/**
+ * Gym requests - tracks requests to add new gyms
+ */
+export const gymRequests = pgTable("gymRequests", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  location: text("location"),
+  requestedBy: integer("requestedBy").notNull(),
+  status: varchar("status", { length: 20 }).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type GymRequest = typeof gymRequests.$inferSelect;
+export type InsertGymRequest = typeof gymRequests.$inferInsert;
