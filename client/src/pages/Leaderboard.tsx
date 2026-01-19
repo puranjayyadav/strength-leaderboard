@@ -5,7 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { Link } from "wouter";
-import { Trophy, LogIn, LogOut } from "lucide-react";
+import { Trophy, LogIn, LogOut, ArrowUpDown } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // getLoginUrl removed
 
 export default function Leaderboard() {
@@ -121,11 +122,46 @@ export default function Leaderboard() {
                     <th className="px-4 py-4 text-left text-xs font-black uppercase text-accent tracking-tighter">Rank</th>
                     <th className="px-4 py-4 text-left text-xs font-black uppercase text-accent tracking-tighter">Athlete</th>
                     <th className="px-4 py-4 text-right text-xs font-black uppercase text-accent tracking-tighter">BW</th>
-                    <th className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter ${sortBy === 'squat' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}>Squat</th>
-                    <th className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter ${sortBy === 'bench' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}>Bench</th>
-                    <th className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter ${sortBy === 'deadlift' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}>Deadlift</th>
-                    <th className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter ${sortBy === 'ohp' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}>OHP</th>
-                    <th className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter ${sortBy === 'total' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}>Total</th>
+                    <th
+                      onClick={() => setSortBy('squat')}
+                      className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === 'squat' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        Squat <ArrowUpDown className="w-3 h-3" />
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => setSortBy('bench')}
+                      className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === 'bench' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        Bench <ArrowUpDown className="w-3 h-3" />
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => setSortBy('deadlift')}
+                      className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === 'deadlift' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        Deadlift <ArrowUpDown className="w-3 h-3" />
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => setSortBy('ohp')}
+                      className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === 'ohp' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        OHP <ArrowUpDown className="w-3 h-3" />
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => setSortBy('total')}
+                      className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === 'total' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        Total <ArrowUpDown className="w-3 h-3" />
+                      </div>
+                    </th>
                     <th className="px-4 py-4 text-right text-xs font-black uppercase text-accent tracking-tighter">Action</th>
                   </tr>
                 </thead>
@@ -147,7 +183,15 @@ export default function Leaderboard() {
                           </div>
                         </td>
                         <td className="px-4 py-4">
-                          <div className="font-bold text-foreground group-hover:text-accent transition-colors">{athlete.name}</div>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-8 h-8 border border-accent/20">
+                              <AvatarImage src={athlete.avatarUrl || ""} />
+                              <AvatarFallback className="bg-muted text-[10px] font-black">{athlete.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="font-bold text-foreground group-hover:text-accent transition-colors">
+                              {athlete.name}
+                            </div>
+                          </div>
                         </td>
                         <td className="px-4 py-4 text-right text-xs text-muted-foreground font-medium">
                           {athlete.bodyWeight ? `${athlete.bodyWeight}` : "—"}

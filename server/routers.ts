@@ -108,6 +108,7 @@ export const appRouter = router({
         bench: z.number().optional(),
         deadlift: z.number().optional(),
         ohp: z.number().optional(),
+        avatarUrl: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         await enforceAthleteOwnership(input.athleteId, ctx.user);
@@ -117,11 +118,12 @@ export const appRouter = router({
           newTotal = String(updates.squat + updates.bench + updates.deadlift);
         }
         return updateAthlete(athleteId, {
-          bodyWeight: updates.bodyWeight ? String(updates.bodyWeight) : null,
-          squat: updates.squat ? String(updates.squat) : null,
-          bench: updates.bench ? String(updates.bench) : null,
-          deadlift: updates.deadlift ? String(updates.deadlift) : null,
-          ohp: updates.ohp ? String(updates.ohp) : null,
+          bodyWeight: updates.bodyWeight ? String(updates.bodyWeight) : undefined,
+          squat: updates.squat ? String(updates.squat) : undefined,
+          bench: updates.bench ? String(updates.bench) : undefined,
+          deadlift: updates.deadlift ? String(updates.deadlift) : undefined,
+          ohp: updates.ohp ? String(updates.ohp) : undefined,
+          avatarUrl: updates.avatarUrl,
           total: newTotal,
         });
       }),
@@ -134,6 +136,7 @@ export const appRouter = router({
         deadlift: z.number().optional(),
         ohp: z.number().optional(),
         bodyWeight: z.number().optional(),
+        avatarUrl: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user) throw new Error("Unauthorized");
@@ -144,6 +147,7 @@ export const appRouter = router({
         const athlete = await importAthlete({
           name: input.name,
           email: ctx.user.email,
+          avatarUrl: input.avatarUrl,
           squat: input.squat ? String(input.squat) : null,
           bench: input.bench ? String(input.bench) : null,
           deadlift: input.deadlift ? String(input.deadlift) : null,

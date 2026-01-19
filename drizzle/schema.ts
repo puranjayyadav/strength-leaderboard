@@ -46,6 +46,7 @@ export const athletes = pgTable("athletes", {
   revBandSquat: decimal("revBandSquat", { precision: 6, scale: 2 }),
   revBandDl: decimal("revBandDl", { precision: 6, scale: 2 }),
   slingshotBench: decimal("slingshotBench", { precision: 6, scale: 2 }),
+  avatarUrl: text("avatarUrl"),
   email: varchar("email", { length: 320 }).unique(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),

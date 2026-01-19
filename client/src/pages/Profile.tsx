@@ -7,13 +7,17 @@ import { trpc } from "@/lib/trpc";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { ArrowLeft, Edit2, Save, X, Plus, TrendingUp, History } from "lucide-react";
+import { ArrowLeft, Edit2, Save, X, Plus, TrendingUp, History, Camera, Upload } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/lib/supabase";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "sonner";
 
 export default function Profile() {
   const [, navigate] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [isAddingLift, setIsAddingLift] = useState(false);
   const [selectedAthleteId, setSelectedAthleteId] = useState<number | null>(null);
 
@@ -41,6 +45,7 @@ export default function Profile() {
     bench: "",
     deadlift: "",
     ohp: "",
+    avatarUrl: "",
   });
 
   const [newLift, setNewLift] = useState({
@@ -64,6 +69,7 @@ export default function Profile() {
         bench: formData.bench ? parseFloat(formData.bench) : undefined,
         deadlift: formData.deadlift ? parseFloat(formData.deadlift) : undefined,
         ohp: formData.ohp ? parseFloat(formData.ohp) : undefined,
+        avatarUrl: formData.avatarUrl || undefined,
       });
       setIsEditing(false);
       refetchAthlete();
@@ -110,6 +116,44 @@ export default function Profile() {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !athleteId) return;
+
+    try {
+      setUploading(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${athleteId}-${Math.random()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      setFormData(prev => ({ ...prev, avatarUrl: publicUrl }));
+
+      // Auto-save the new avatar URL
+      await updateProfileMutation.mutateAsync({
+        athleteId,
+        avatarUrl: publicUrl
+      });
+
+      refetchAthlete();
+      toast.success("Profile picture updated!");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to upload image.");
+      console.error(error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   // Sync form data when athlete loads
   useMemo(() => {
     if (athlete) {
@@ -119,6 +163,7 @@ export default function Profile() {
         bench: athlete.bench?.toString() || "",
         deadlift: athlete.deadlift?.toString() || "",
         ohp: athlete.ohp?.toString() || "",
+        avatarUrl: athlete.avatarUrl || "",
       });
     }
   }, [athlete]);
@@ -222,14 +267,38 @@ export default function Profile() {
               </Button>
             </div>
           </div>
-          <div>
-            <h1 className="text-4xl md:text-5xl font-bold uppercase tracking-wider mb-1">
-              {athlete.name}
-            </h1>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground uppercase font-bold tracking-tighter">
-              <span className="text-accent">Rank #?</span>
-              <span>•</span>
-              <span>{athlete.bodyWeight ? `${athlete.bodyWeight} lbs` : "No BW"}</span>
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="relative group">
+              <Avatar className="w-24 h-24 md:w-32 md:h-32 border-4 border-accent/20 group-hover:border-accent transition-all duration-500">
+                <AvatarImage src={athlete.avatarUrl || ""} />
+                <AvatarFallback className="bg-card text-accent text-3xl font-black">
+                  {athlete.name.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <label
+                htmlFor="pfp-upload"
+                className="absolute bottom-0 right-0 bg-accent text-black p-2 rounded-full cursor-pointer hover:scale-110 transition-transform shadow-lg"
+              >
+                {uploading ? <div className="w-5 h-5 animate-spin border-2 border-black border-t-transparent rounded-full" /> : <Upload className="w-5 h-5" />}
+              </label>
+              <input
+                id="pfp-upload"
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileUpload}
+                disabled={uploading}
+              />
+            </div>
+            <div className="text-center md:text-left">
+              <h1 className="text-4xl md:text-5xl font-bold uppercase tracking-wider mb-1">
+                {athlete.name}
+              </h1>
+              <div className="flex items-center justify-center md:justify-start gap-4 text-sm text-muted-foreground uppercase font-bold tracking-tighter">
+                <span className="text-accent">Elite Athlete</span>
+                <span>•</span>
+                <span>{athlete.bodyWeight ? `${athlete.bodyWeight} lbs` : "No BW"}</span>
+              </div>
             </div>
           </div>
         </div>

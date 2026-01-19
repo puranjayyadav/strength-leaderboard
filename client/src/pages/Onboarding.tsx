@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Trophy, Save, ChevronRight } from "lucide-react";
+import { Trophy, Save, ChevronRight, Camera, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function Onboarding() {
     const { user } = useAuth();
@@ -22,7 +24,9 @@ export default function Onboarding() {
         bench: "",
         deadlift: "",
         ohp: "",
+        avatarUrl: "",
     });
+    const [uploading, setUploading] = useState(false);
 
     // Auto-fill name from auth data when it loads
     useEffect(() => {
@@ -42,12 +46,43 @@ export default function Onboarding() {
         }
     });
 
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            setUploading(true);
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random()}.${fileExt}`;
+            const filePath = `avatars/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(filePath);
+
+            setFormData(prev => ({ ...prev, avatarUrl: publicUrl }));
+            toast.success("Image uploaded!");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to upload image. (Make sure you have an 'avatars' bucket in Supabase)");
+            console.error(error);
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.name) return;
 
         await setupMutation.mutateAsync({
             name: formData.name,
+            avatarUrl: formData.avatarUrl || undefined,
             bodyWeight: formData.bodyWeight ? parseFloat(formData.bodyWeight) : undefined,
             squat: formData.squat ? parseFloat(formData.squat) : undefined,
             bench: formData.bench ? parseFloat(formData.bench) : undefined,
@@ -80,6 +115,37 @@ export default function Onboarding() {
                     <form onSubmit={handleSubmit} className="space-y-8">
                         {step === 1 && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                                <div className="flex flex-col items-center gap-6 mb-8">
+                                    <div className="relative group">
+                                        <Avatar className="w-32 h-32 border-4 border-accent/20 group-hover:border-accent transition-all duration-500">
+                                            <AvatarImage src={formData.avatarUrl} />
+                                            <AvatarFallback className="bg-card text-accent">
+                                                <Camera className="w-10 h-10" />
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <label
+                                            htmlFor="pfp-upload"
+                                            className="absolute bottom-0 right-0 bg-accent text-black p-2 rounded-full cursor-pointer hover:scale-110 transition-transform shadow-lg"
+                                        >
+                                            <Upload className="w-5 h-5" />
+                                        </label>
+                                        <input
+                                            id="pfp-upload"
+                                            type="file"
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={handleFileUpload}
+                                            disabled={uploading}
+                                        />
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-xs uppercase font-black text-accent tracking-widest mb-1">
+                                            {uploading ? "Uploading..." : "Profile Image"}
+                                        </p>
+                                        <p className="text-[10px] text-muted-foreground uppercase font-bold italic">Show them who's coming for the #1 spot</p>
+                                    </div>
+                                </div>
+
                                 <div className="space-y-2">
                                     <Label htmlFor="name" className="text-xs uppercase font-black text-accent tracking-widest">
                                         Your Full Name
