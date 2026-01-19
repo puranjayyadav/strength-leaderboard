@@ -47,28 +47,30 @@ export default function Leaderboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground pb-20 md:pb-0">
       {/* Header with dramatic gradient */}
       <div className="relative overflow-hidden border-b border-border light-ray">
-        <div className="container py-12 md:py-16 relative z-10">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+        <div className="container py-6 md:py-12 lg:py-16 relative z-10">
+          <div className="flex flex-col gap-4 md:gap-6">
             <div>
-              <h1 className="text-5xl md:text-6xl font-bold uppercase tracking-wider mb-2">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold uppercase tracking-wider mb-2">
                 Strength Leaderboard
               </h1>
-              <p className="text-muted-foreground text-lg uppercase font-bold tracking-widest italic flex items-center gap-2">
+              <p className="text-muted-foreground text-sm md:text-lg uppercase font-bold tracking-widest italic flex items-center gap-2">
                 {selectedGymId
                   ? gyms.find(g => g.id === selectedGymId)?.name
                   : "Global Rankings"}
-                <MapPin className="w-4 h-4 text-accent" />
+                <MapPin className="w-3 h-3 md:w-4 md:h-4 text-accent" />
               </p>
             </div>
-            <div className="flex flex-col md:flex-row gap-3 items-center">
+
+            {/* Mobile-optimized controls */}
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
               <Select
                 value={selectedGymId?.toString() || "global"}
                 onValueChange={(val: string) => setSelectedGymId(val === "global" ? undefined : parseInt(val))}
               >
-                <SelectTrigger className="w-[200px] bg-card/50 border-accent/20 font-bold uppercase text-xs h-10">
+                <SelectTrigger className="w-full sm:w-[200px] bg-card/50 border-accent/20 font-bold uppercase text-xs h-11 md:h-10">
                   <SelectValue placeholder="Select Space" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
@@ -80,26 +82,27 @@ export default function Leaderboard() {
                   ))}
                 </SelectContent>
               </Select>
-              <div className="flex gap-3">
+
+              <div className="flex gap-2 sm:gap-3 flex-1 sm:flex-initial">
                 {loading ? null : isAuthenticated ? (
                   <>
-                    <Link href="/profile">
-                      <Button className="btn-dramatic">
+                    <Link href="/profile" className="flex-1 sm:flex-initial">
+                      <Button className="btn-dramatic w-full h-11 md:h-10">
                         My Profile
                       </Button>
                     </Link>
                     <Button
                       variant="outline"
                       onClick={() => logout()}
-                      className="uppercase font-bold"
+                      className="uppercase font-bold h-11 md:h-10 px-3 sm:px-4"
                     >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Logout
+                      <LogOut className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Logout</span>
                     </Button>
                   </>
                 ) : (
-                  <Link href="/auth">
-                    <Button className="btn-dramatic text-white">
+                  <Link href="/auth" className="flex-1 sm:flex-initial">
+                    <Button className="btn-dramatic text-white w-full h-11 md:h-10">
                       <LogIn className="w-4 h-4 mr-2" />
                       Login
                     </Button>
@@ -152,133 +155,222 @@ export default function Leaderboard() {
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="px-4 py-4 text-left text-xs font-black uppercase text-accent tracking-tighter">Rank</th>
-                    <th className="px-4 py-4 text-left text-xs font-black uppercase text-accent tracking-tighter">Athlete</th>
-                    <th className="px-4 py-4 text-right text-xs font-black uppercase text-accent tracking-tighter">BW</th>
-                    <th
-                      onClick={() => setSortBy('squat')}
-                      className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === 'squat' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
-                    >
-                      <div className="flex items-center justify-end gap-1">
-                        Squat <ArrowUpDown className="w-3 h-3" />
+            <>
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3 p-4">
+                {athletes.map((athlete, idx) => (
+                  <Card key={athlete.id} className="p-4 hover:bg-card/50 transition-colors">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="flex-shrink-0">
+                        {idx === 0 && <span className="text-2xl">🥇</span>}
+                        {idx === 1 && <span className="text-2xl">🥈</span>}
+                        {idx === 2 && <span className="text-2xl">🥉</span>}
+                        {idx >= 3 && (
+                          <span className="text-sm font-black text-muted-foreground/50">#{idx + 1}</span>
+                        )}
                       </div>
-                    </th>
-                    <th
-                      onClick={() => setSortBy('bench')}
-                      className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === 'bench' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
-                    >
-                      <div className="flex items-center justify-end gap-1">
-                        Bench <ArrowUpDown className="w-3 h-3" />
+
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Avatar className="w-14 h-14 border-2 border-accent/20 cursor-pointer active:scale-95 transition-transform">
+                            <AvatarImage src={athlete.avatarUrl || ""} className="object-cover" />
+                            <AvatarFallback className="bg-muted text-sm font-black">{athlete.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 overflow-hidden bg-transparent border-none shadow-none flex items-center justify-center">
+                          <VisuallyHidden>
+                            <DialogTitle>{athlete.name}'s Profile Picture</DialogTitle>
+                          </VisuallyHidden>
+                          <img
+                            src={athlete.avatarUrl || ""}
+                            alt={athlete.name}
+                            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                          />
+                        </DialogContent>
+                      </Dialog>
+
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-foreground truncate">{athlete.name}</h3>
+                        <p className="text-xs text-muted-foreground">BW: {athlete.bodyWeight || "—"} lbs</p>
                       </div>
-                    </th>
-                    <th
-                      onClick={() => setSortBy('deadlift')}
-                      className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === 'deadlift' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
-                    >
-                      <div className="flex items-center justify-end gap-1">
-                        Deadlift <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th
-                      onClick={() => setSortBy('ohp')}
-                      className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === 'ohp' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
-                    >
-                      <div className="flex items-center justify-end gap-1">
-                        OHP <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th
-                      onClick={() => setSortBy('total')}
-                      className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === 'total' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
-                    >
-                      <div className="flex items-center justify-end gap-1">
-                        Total <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th className="px-4 py-4 text-right text-xs font-black uppercase text-accent tracking-tighter">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {athletes.map((athlete, idx) => {
-                    return (
-                      <tr
-                        key={athlete.id}
-                        className="border-b border-border hover:bg-card/50 transition-colors group"
-                      >
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-2">
-                            {idx === 0 && <span className="text-xl">🥇</span>}
-                            {idx === 1 && <span className="text-xl">🥈</span>}
-                            {idx === 2 && <span className="text-xl">🥉</span>}
-                            {idx >= 3 && (
-                              <span className="text-xs font-black text-muted-foreground/50">#{idx + 1}</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-3">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Avatar className="w-12 h-12 border-2 border-accent/20 cursor-pointer hover:scale-105 transition-transform">
-                                  <AvatarImage src={athlete.avatarUrl || ""} className="object-cover" />
-                                  <AvatarFallback className="bg-muted text-sm font-black">{athlete.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 overflow-hidden bg-transparent border-none shadow-none flex items-center justify-center">
-                                <VisuallyHidden>
-                                  <DialogTitle>{athlete.name}'s Profile Picture</DialogTitle>
-                                </VisuallyHidden>
-                                <img
-                                  src={athlete.avatarUrl || ""}
-                                  alt={athlete.name}
-                                  className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
-                                />
-                              </DialogContent>
-                            </Dialog>
-                            <div className="font-bold text-foreground group-hover:text-accent transition-colors">
-                              {athlete.name}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4 text-right text-xs text-muted-foreground font-medium">
-                          {athlete.bodyWeight ? `${athlete.bodyWeight}` : "—"}
-                        </td>
-                        <td className={`px-4 py-4 text-right text-sm font-bold ${sortBy === 'squat' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
+
+                      <Link href={`/athlete/${athlete.id}`}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-[10px] uppercase font-black hover:bg-accent hover:text-black transition-all h-8 px-3"
+                        >
+                          View
+                        </Button>
+                      </Link>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className={`p-2 rounded ${sortBy === 'squat' ? 'bg-accent/10 border border-accent/20' : 'bg-muted/30'}`}>
+                        <div className="text-[10px] text-muted-foreground uppercase font-bold">Squat</div>
+                        <div className={`font-bold ${sortBy === 'squat' ? 'text-accent' : 'text-foreground'}`}>
                           {athlete.squat || "—"}
-                        </td>
-                        <td className={`px-4 py-4 text-right text-sm font-bold ${sortBy === 'bench' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
+                        </div>
+                      </div>
+                      <div className={`p-2 rounded ${sortBy === 'bench' ? 'bg-accent/10 border border-accent/20' : 'bg-muted/30'}`}>
+                        <div className="text-[10px] text-muted-foreground uppercase font-bold">Bench</div>
+                        <div className={`font-bold ${sortBy === 'bench' ? 'text-accent' : 'text-foreground'}`}>
                           {athlete.bench || "—"}
-                        </td>
-                        <td className={`px-4 py-4 text-right text-sm font-bold ${sortBy === 'deadlift' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
+                        </div>
+                      </div>
+                      <div className={`p-2 rounded ${sortBy === 'deadlift' ? 'bg-accent/10 border border-accent/20' : 'bg-muted/30'}`}>
+                        <div className="text-[10px] text-muted-foreground uppercase font-bold">Deadlift</div>
+                        <div className={`font-bold ${sortBy === 'deadlift' ? 'text-accent' : 'text-foreground'}`}>
                           {athlete.deadlift || "—"}
-                        </td>
-                        <td className={`px-4 py-4 text-right text-sm font-bold ${sortBy === 'ohp' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
+                        </div>
+                      </div>
+                      <div className={`p-2 rounded ${sortBy === 'ohp' ? 'bg-accent/10 border border-accent/20' : 'bg-muted/30'}`}>
+                        <div className="text-[10px] text-muted-foreground uppercase font-bold">OHP</div>
+                        <div className={`font-bold ${sortBy === 'ohp' ? 'text-accent' : 'text-foreground'}`}>
                           {athlete.ohp || "—"}
-                        </td>
-                        <td className={`px-4 py-4 text-right text-base font-black ${sortBy === 'total' ? 'text-accent bg-accent/10' : 'text-foreground'}`}>
-                          {athlete.total || "—"}
-                        </td>
-                        <td className="px-4 py-4 text-right">
-                          <Link href={`/athlete/${athlete.id}`}>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-[10px] uppercase font-black hover:bg-accent hover:text-black transition-all"
-                            >
-                              View
-                            </Button>
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={`mt-3 p-2 rounded text-center ${sortBy === 'total' ? 'bg-accent/10 border border-accent/20' : 'bg-muted/30'}`}>
+                      <div className="text-[10px] text-muted-foreground uppercase font-bold">Total</div>
+                      <div className={`text-lg font-black ${sortBy === 'total' ? 'text-accent' : 'text-foreground'}`}>
+                        {athlete.total || "—"}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="px-4 py-4 text-left text-xs font-black uppercase text-accent tracking-tighter">Rank</th>
+                      <th className="px-4 py-4 text-left text-xs font-black uppercase text-accent tracking-tighter">Athlete</th>
+                      <th className="px-4 py-4 text-right text-xs font-black uppercase text-accent tracking-tighter">BW</th>
+                      <th
+                        onClick={() => setSortBy('squat')}
+                        className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === 'squat' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          Squat <ArrowUpDown className="w-3 h-3" />
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => setSortBy('bench')}
+                        className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === 'bench' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          Bench <ArrowUpDown className="w-3 h-3" />
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => setSortBy('deadlift')}
+                        className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === 'deadlift' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          Deadlift <ArrowUpDown className="w-3 h-3" />
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => setSortBy('ohp')}
+                        className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === 'ohp' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          OHP <ArrowUpDown className="w-3 h-3" />
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => setSortBy('total')}
+                        className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === 'total' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          Total <ArrowUpDown className="w-3 h-3" />
+                        </div>
+                      </th>
+                      <th className="px-4 py-4 text-right text-xs font-black uppercase text-accent tracking-tighter">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {athletes.map((athlete, idx) => {
+                      return (
+                        <tr
+                          key={athlete.id}
+                          className="border-b border-border hover:bg-card/50 transition-colors group"
+                        >
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-2">
+                              {idx === 0 && <span className="text-xl">🥇</span>}
+                              {idx === 1 && <span className="text-xl">🥈</span>}
+                              {idx === 2 && <span className="text-xl">🥉</span>}
+                              {idx >= 3 && (
+                                <span className="text-xs font-black text-muted-foreground/50">#{idx + 1}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-3">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Avatar className="w-12 h-12 border-2 border-accent/20 cursor-pointer hover:scale-105 transition-transform">
+                                    <AvatarImage src={athlete.avatarUrl || ""} className="object-cover" />
+                                    <AvatarFallback className="bg-muted text-sm font-black">{athlete.name.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 overflow-hidden bg-transparent border-none shadow-none flex items-center justify-center">
+                                  <VisuallyHidden>
+                                    <DialogTitle>{athlete.name}'s Profile Picture</DialogTitle>
+                                  </VisuallyHidden>
+                                  <img
+                                    src={athlete.avatarUrl || ""}
+                                    alt={athlete.name}
+                                    className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                                  />
+                                </DialogContent>
+                              </Dialog>
+                              <div className="font-bold text-foreground group-hover:text-accent transition-colors">
+                                {athlete.name}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-right text-xs text-muted-foreground font-medium">
+                            {athlete.bodyWeight ? `${athlete.bodyWeight}` : "—"}
+                          </td>
+                          <td className={`px-4 py-4 text-right text-sm font-bold ${sortBy === 'squat' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
+                            {athlete.squat || "—"}
+                          </td>
+                          <td className={`px-4 py-4 text-right text-sm font-bold ${sortBy === 'bench' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
+                            {athlete.bench || "—"}
+                          </td>
+                          <td className={`px-4 py-4 text-right text-sm font-bold ${sortBy === 'deadlift' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
+                            {athlete.deadlift || "—"}
+                          </td>
+                          <td className={`px-4 py-4 text-right text-sm font-bold ${sortBy === 'ohp' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
+                            {athlete.ohp || "—"}
+                          </td>
+                          <td className={`px-4 py-4 text-right text-base font-black ${sortBy === 'total' ? 'text-accent bg-accent/10' : 'text-foreground'}`}>
+                            {athlete.total || "—"}
+                          </td>
+                          <td className="px-4 py-4 text-right">
+                            <Link href={`/athlete/${athlete.id}`}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-[10px] uppercase font-black hover:bg-accent hover:text-black transition-all"
+                              >
+                                View
+                              </Button>
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
 
