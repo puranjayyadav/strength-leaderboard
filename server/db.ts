@@ -126,6 +126,26 @@ export async function updateAthlete(id: number, data: Partial<InsertAthlete>) {
   return getAthleteById(id);
 }
 
+export async function importAthlete(data: InsertAthlete) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  if (!data.name) {
+    throw new Error("Athlete name is required for import");
+  }
+
+  const existing = await getAthleteByName(data.name);
+  if (existing) {
+    // Update existing athlete
+    await db.update(athletes).set(data).where(eq(athletes.id, existing.id));
+    return getAthleteById(existing.id);
+  } else {
+    // Insert new athlete
+    await db.insert(athletes).values(data);
+    return getAthleteByName(data.name);
+  }
+}
+
 // Weight entries queries
 export async function getWeightEntriesForAthlete(athleteId: number) {
   const db = await getDb();
