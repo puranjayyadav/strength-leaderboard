@@ -15,7 +15,7 @@ import Onboarding from "@/pages/Onboarding";
 import { useEffect } from "react";
 
 function Router() {
-  const { user, loading, error } = useAuth();
+  const { user, loading, error, isAuthenticated } = useAuth();
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
@@ -23,14 +23,33 @@ function Router() {
 
     if (!loading) {
       console.log("[Router] Auth state:", {
-        hasUser: !!user,
+        isAuthenticated,
+        hasDbUser: !!user,
         athleteId: (user as any)?.athleteId,
         location,
         loading
       });
-      if (!user && location !== "/auth") {
-        setLocation("/auth");
-      } else if (user) {
+
+      // 1. If not authenticated, always go to /auth
+      if (!isAuthenticated) {
+        if (location !== "/auth") {
+          console.log("[Router] Not authenticated, redirecting to /auth");
+          setLocation("/auth");
+        }
+        return;
+      }
+
+      // 2. We are authenticated. If we don't have DB user data yet, wait or handle?
+      // Since loading is false, if user is still null, it might be a sync issue
+      // but usually the server returns the user if token is valid.
+      if (isAuthenticated && !user) {
+        console.warn("[Router] Authenticated but no DB user found. This should not happen normally.");
+        // We stay on the current page for now, or could show error
+        return;
+      }
+
+      // 3. Authenticated and have DB user. Check for athlete profile.
+      if (user) {
         // @ts-ignore - athleteId is added in DB schema
         const hasNoAthlete = !user.athleteId;
         if (hasNoAthlete && location !== "/onboarding") {
@@ -42,7 +61,7 @@ function Router() {
         }
       }
     }
-  }, [user, loading, location, setLocation, error]);
+  }, [user, loading, location, setLocation, error, isAuthenticated]);
 
   if (loading) {
     return (
