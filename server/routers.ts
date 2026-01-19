@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
 import { User, InsertUser, users, athletes, InsertAthlete, weightEntries, InsertWeightEntry, liftRecords, InsertLiftRecord } from "../drizzle/schema";
-import { getAllAthletes, getAthleteById, getLiftRecordsForAthlete, getWeightEntriesForAthlete, addLiftRecord, addWeightEntry, updateLiftRecord, updateAthlete, getLeaderboardByExercise, importAthlete, enforceAthleteOwnership, linkUserToAthlete, getAllGyms, getGymById, getGymBySlug, getGymByInviteCode, createGym, updateAthleteGym, getAllUsers, updateUserRole, requestGymAdd, getAllGymRequests, updateGymRequestStatus, getGymRequestById } from "./db";
+import { getAllAthletes, getAthleteById, getLiftRecordsForAthlete, getWeightEntriesForAthlete, addLiftRecord, addWeightEntry, updateLiftRecord, updateAthlete, getLeaderboardByExercise, importAthlete, enforceAthleteOwnership, linkUserToAthlete, getAllGyms, getGymById, getGymBySlug, getGymByInviteCode, createGym, updateAthleteGym, getAllUsers, updateUserRole, requestGymAdd, getAllGymRequests, updateGymRequestStatus, getGymRequestById, getUserById } from "./db";
 
 export const appRouter = router({
   system: router({
@@ -120,12 +120,20 @@ export const appRouter = router({
             const prefix = (req.name.match(/[A-Z]/g) || req.name.substring(0, 3).toUpperCase().split('')).slice(0, 3).join('').toUpperCase().padEnd(3, 'X');
             const inviteCode = `${prefix}${Math.floor(100 + Math.random() * 899)}`;
 
-            await createGym({
+            const gym = await createGym({
               name: req.name,
               slug,
               inviteCode,
               createdBy: req.requestedBy,
             });
+
+            // Automatically add the requesting user to the gym
+            if (gym) {
+              const requestingUser = await getUserById(req.requestedBy);
+              if (requestingUser?.athleteId) {
+                await updateAthleteGym(requestingUser.athleteId, gym.id);
+              }
+            }
           }
         }
 

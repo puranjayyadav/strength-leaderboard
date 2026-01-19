@@ -95,6 +95,18 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get user: database not available");
+    return undefined;
+  }
+
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
 // Athletes queries
 export async function getAllAthletes() {
   const db = await getDb();
@@ -211,26 +223,49 @@ export async function getLeaderboardByExercise(exerciseType: string, gymId?: num
   const db = await getDb();
   if (!db) return [];
 
-  let query = db.select().from(athletes);
+  let baseQuery = db.select().from(athletes);
 
   if (gymId) {
     // @ts-ignore - gymId added to athletes table
-    query = query.where(eq(athletes.gymId, gymId));
+    baseQuery = baseQuery.where(eq(athletes.gymId, gymId));
   }
 
-  if (exerciseType === 'total') {
-    return query.orderBy(desc(athletes.total));
-  } else if (exerciseType === 'squat') {
-    return query.orderBy(desc(athletes.squat));
-  } else if (exerciseType === 'bench') {
-    return query.orderBy(desc(athletes.bench));
-  } else if (exerciseType === 'deadlift') {
-    return query.orderBy(desc(athletes.deadlift));
-  } else if (exerciseType === 'ohp') {
-    return query.orderBy(desc(athletes.ohp));
-  }
+  // Get all results and sort in JavaScript to handle NULL values properly
+  const results = await baseQuery;
 
-  return query.orderBy(desc(athletes.total));
+  // Sort with NULL/0 values at the bottom
+  return results.sort((a, b) => {
+    let aVal: number | null = null;
+    let bVal: number | null = null;
+
+    if (exerciseType === 'total') {
+      aVal = a.total ? parseFloat(a.total) : null;
+      bVal = b.total ? parseFloat(b.total) : null;
+    } else if (exerciseType === 'squat') {
+      aVal = a.squat ? parseFloat(a.squat) : null;
+      bVal = b.squat ? parseFloat(b.squat) : null;
+    } else if (exerciseType === 'bench') {
+      aVal = a.bench ? parseFloat(a.bench) : null;
+      bVal = b.bench ? parseFloat(b.bench) : null;
+    } else if (exerciseType === 'deadlift') {
+      aVal = a.deadlift ? parseFloat(a.deadlift) : null;
+      bVal = b.deadlift ? parseFloat(b.deadlift) : null;
+    } else if (exerciseType === 'ohp') {
+      aVal = a.ohp ? parseFloat(a.ohp) : null;
+      bVal = b.ohp ? parseFloat(b.ohp) : null;
+    } else {
+      aVal = a.total ? parseFloat(a.total) : null;
+      bVal = b.total ? parseFloat(b.total) : null;
+    }
+
+    // NULL values go to the bottom
+    if (aVal === null && bVal === null) return 0;
+    if (aVal === null) return 1;
+    if (bVal === null) return -1;
+
+    // Descending order for non-null values
+    return bVal - aVal;
+  });
 }
 
 // Gym queries
