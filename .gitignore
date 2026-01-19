@@ -109,3 +109,4 @@ temp/
 # Test scripts
 test-db.cjs
 test-pooler.cjs
+.vercel

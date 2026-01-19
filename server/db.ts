@@ -2,7 +2,7 @@ import { eq, and, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pkg from 'pg';
 const { Pool } = pkg;
-import { InsertUser, users, athletes, InsertAthlete, weightEntries, InsertWeightEntry, liftRecords, InsertLiftRecord } from "../drizzle/schema";
+import { User, InsertUser, users, athletes, InsertAthlete, weightEntries, InsertWeightEntry, liftRecords, InsertLiftRecord } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 let _pool: InstanceType<typeof Pool> | null = null;
@@ -13,10 +13,13 @@ export async function getDb() {
     try {
       _pool = new Pool({
         connectionString: process.env.DATABASE_URL,
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+        max: 1, // Limit connections for serverless
       });
       _db = drizzle(_pool);
+      console.log("[Database] Connected successfully");
     } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
+      console.error("[Database] Failed to connect:", error);
       _db = null;
     }
   }
@@ -209,4 +212,37 @@ export async function getLeaderboardByExercise(exerciseType: string) {
   }
 
   return db.select().from(athletes).orderBy(desc(athletes.total));
+}
+// tRPC specific procedure for ensuring a user only modifies their own athlete data
+export async function enforceAthleteOwnership(athleteId: number, user: User | null) {
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+  if (user.role === 'admin') return; // Admins can do anything
+  if (user.athleteId !== athleteId) {
+    throw new Error("You do not have permission to edit this athlete profile");
+  }
+}
+
+export async function linkUserToAthlete(userId: number, athleteId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ athleteId }).where(eq(users.id, userId));
+}
+
+export async function syncUserAthlete(user: User): Promise<User> {
+  if (user.athleteId) return user;
+
+  const db = await getDb();
+  if (!db) return user;
+
+  // Try to find an athlete with the same name
+  const existingAthlete = await getAthleteByName(user.name || "");
+  if (existingAthlete) {
+    await linkUserToAthlete(user.id, existingAthlete.id);
+    return { ...user, athleteId: existingAthlete.id };
+  }
+
+  // WE NO LONGER AUTO-CREATE. The user will be prompted on the frontend.
+  return user;
 }

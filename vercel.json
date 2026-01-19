@@ -1,0 +1,18 @@
+{
+    "version": 2,
+    "buildCommand": "npm run build",
+    "rewrites": [
+        {
+            "source": "/api/trpc/(.*)",
+            "destination": "/api/dist/index.js"
+        },
+        {
+            "source": "/api/(.*)",
+            "destination": "/api/dist/index.js"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}

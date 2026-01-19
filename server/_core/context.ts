@@ -1,6 +1,6 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import type { User } from "../../drizzle/schema";
-import { supabaseAdmin } from "../supabase";
+import { getSupabaseAdmin } from "../supabase";
 import * as db from "../db";
 
 export type TrpcContext = {
@@ -18,7 +18,7 @@ export async function createContext(
     const authHeader = opts.req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
-      const { data: { user: supabaseUser }, error } = await supabaseAdmin.auth.getUser(token);
+      const { data: { user: supabaseUser }, error } = await getSupabaseAdmin().auth.getUser(token);
 
       if (!error && supabaseUser) {
         // Sync user to our database
@@ -32,6 +32,10 @@ export async function createContext(
             lastSignedIn: new Date(),
           });
           user = (await db.getUserByOpenId(supabaseUser.id)) ?? null;
+        }
+
+        if (user) {
+          user = await db.syncUserAthlete(user);
         }
       }
     }

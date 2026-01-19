@@ -8,8 +8,10 @@ import Auth from "@/pages/Auth";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { AuthProvider } from "./contexts/AuthContext";
+import { useAuth } from "./_core/hooks/useAuth";
 import Profile from "@/pages/Profile";
+import Onboarding from "@/pages/Onboarding";
 import { useEffect } from "react";
 
 function Router() {
@@ -17,11 +19,26 @@ function Router() {
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!loading && !user && location !== "/auth") {
-      setLocation("/auth");
-    }
-    if (!loading && user && location === "/auth") {
-      setLocation("/");
+    if (!loading) {
+      console.log("[Router] Auth state:", {
+        hasUser: !!user,
+        athleteId: (user as any)?.athleteId,
+        location,
+        loading
+      });
+      if (!user && location !== "/auth") {
+        setLocation("/auth");
+      } else if (user) {
+        // @ts-ignore - athleteId is added in DB schema
+        const hasNoAthlete = !user.athleteId;
+        if (hasNoAthlete && location !== "/onboarding") {
+          console.log("[Router] Redirecting to onboarding because no athleteId found");
+          setLocation("/onboarding");
+        } else if (!hasNoAthlete && (location === "/auth" || location === "/onboarding")) {
+          console.log("[Router] Redirecting to home because athleteId found");
+          setLocation("/");
+        }
+      }
     }
   }, [user, loading, location, setLocation]);
 
@@ -36,6 +53,7 @@ function Router() {
   return (
     <Switch>
       <Route path={"/auth"} component={Auth} />
+      <Route path={"/onboarding"} component={Onboarding} />
       <Route path={"/"} component={Leaderboard} />
       <Route path={"/profile"} component={Profile} />
       <Route path={"/import"} component={ImportData} />

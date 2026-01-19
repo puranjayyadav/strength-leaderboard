@@ -102,7 +102,7 @@ export default function AthleteProfile() {
                 {athlete.bodyWeight ? `${athlete.bodyWeight} lbs` : "Body weight not recorded"}
               </p>
             </div>
-            {isAuthenticated && (
+            {isAuthenticated && user?.athleteId === athleteId && (
               <Button
                 className="btn-dramatic"
                 onClick={() => (isEditing ? handleSave() : setIsEditing(true))}

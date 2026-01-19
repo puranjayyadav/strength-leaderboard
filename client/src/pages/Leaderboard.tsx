@@ -118,60 +118,61 @@ export default function Leaderboard() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="px-4 py-4 text-left text-sm font-bold uppercase text-accent">Rank</th>
-                    <th className="px-4 py-4 text-left text-sm font-bold uppercase text-accent">Athlete</th>
-                    <th className="px-4 py-4 text-right text-sm font-bold uppercase text-accent">BW</th>
-                    <th className="px-4 py-4 text-right text-sm font-bold uppercase text-accent">
-                      {sortBy === "total" ? "Total" : sortBy.toUpperCase()}
-                    </th>
-                    <th className="px-4 py-4 text-right text-sm font-bold uppercase text-accent">Action</th>
+                    <th className="px-4 py-4 text-left text-xs font-black uppercase text-accent tracking-tighter">Rank</th>
+                    <th className="px-4 py-4 text-left text-xs font-black uppercase text-accent tracking-tighter">Athlete</th>
+                    <th className="px-4 py-4 text-right text-xs font-black uppercase text-accent tracking-tighter">BW</th>
+                    <th className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter ${sortBy === 'squat' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}>Squat</th>
+                    <th className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter ${sortBy === 'bench' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}>Bench</th>
+                    <th className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter ${sortBy === 'deadlift' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}>Deadlift</th>
+                    <th className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter ${sortBy === 'ohp' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}>OHP</th>
+                    <th className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter ${sortBy === 'total' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}>Total</th>
+                    <th className="px-4 py-4 text-right text-xs font-black uppercase text-accent tracking-tighter">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {athletes.map((athlete, idx) => {
-                    const weight =
-                      sortBy === "total"
-                        ? athlete.total
-                        : sortBy === "squat"
-                          ? athlete.squat
-                          : sortBy === "bench"
-                            ? athlete.bench
-                            : sortBy === "deadlift"
-                              ? athlete.deadlift
-                              : athlete.ohp;
-
                     return (
                       <tr
                         key={athlete.id}
-                        className="border-b border-border hover:bg-card/50 transition-colors"
+                        className="border-b border-border hover:bg-card/50 transition-colors group"
                       >
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-2">
-                            {idx === 0 && <span className="text-2xl">🥇</span>}
-                            {idx === 1 && <span className="text-2xl">🥈</span>}
-                            {idx === 2 && <span className="text-2xl">🥉</span>}
+                            {idx === 0 && <span className="text-xl">🥇</span>}
+                            {idx === 1 && <span className="text-xl">🥈</span>}
+                            {idx === 2 && <span className="text-xl">🥉</span>}
                             {idx >= 3 && (
-                              <span className="text-sm font-bold text-muted-foreground">#{idx + 1}</span>
+                              <span className="text-xs font-black text-muted-foreground/50">#{idx + 1}</span>
                             )}
                           </div>
                         </td>
                         <td className="px-4 py-4">
-                          <div className="font-bold text-foreground">{athlete.name}</div>
+                          <div className="font-bold text-foreground group-hover:text-accent transition-colors">{athlete.name}</div>
                         </td>
-                        <td className="px-4 py-4 text-right text-muted-foreground">
-                          {athlete.bodyWeight ? `${athlete.bodyWeight} lbs` : "—"}
+                        <td className="px-4 py-4 text-right text-xs text-muted-foreground font-medium">
+                          {athlete.bodyWeight ? `${athlete.bodyWeight}` : "—"}
                         </td>
-                        <td className="px-4 py-4 text-right">
-                          <div className="text-lg font-bold text-accent">
-                            {weight ? `${weight} lbs` : "—"}
-                          </div>
+                        <td className={`px-4 py-4 text-right text-sm font-bold ${sortBy === 'squat' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
+                          {athlete.squat || "—"}
+                        </td>
+                        <td className={`px-4 py-4 text-right text-sm font-bold ${sortBy === 'bench' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
+                          {athlete.bench || "—"}
+                        </td>
+                        <td className={`px-4 py-4 text-right text-sm font-bold ${sortBy === 'deadlift' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
+                          {athlete.deadlift || "—"}
+                        </td>
+                        <td className={`px-4 py-4 text-right text-sm font-bold ${sortBy === 'ohp' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
+                          {athlete.ohp || "—"}
+                        </td>
+                        <td className={`px-4 py-4 text-right text-base font-black ${sortBy === 'total' ? 'text-accent bg-accent/10' : 'text-foreground'}`}>
+                          {athlete.total || "—"}
                         </td>
                         <td className="px-4 py-4 text-right">
                           <Link href={`/athlete/${athlete.id}`}>
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
-                              className="text-xs uppercase font-bold"
+                              className="text-[10px] uppercase font-black hover:bg-accent hover:text-black transition-all"
                             >
                               View
                             </Button>
