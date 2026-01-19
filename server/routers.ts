@@ -103,6 +103,7 @@ export const appRouter = router({
     updateProfile: protectedProcedure
       .input(z.object({
         athleteId: z.number(),
+        name: z.string().optional(),
         bodyWeight: z.number().optional(),
         squat: z.number().optional(),
         bench: z.number().optional(),
@@ -118,6 +119,7 @@ export const appRouter = router({
           newTotal = String(updates.squat + updates.bench + updates.deadlift);
         }
         return updateAthlete(athleteId, {
+          name: updates.name,
           bodyWeight: updates.bodyWeight ? String(updates.bodyWeight) : undefined,
           squat: updates.squat ? String(updates.squat) : undefined,
           bench: updates.bench ? String(updates.bench) : undefined,

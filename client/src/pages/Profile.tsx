@@ -11,6 +11,8 @@ import { ArrowLeft, Edit2, Save, X, Plus, TrendingUp, History, Camera, Upload } 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { toast } from "sonner";
 
 export default function Profile() {
@@ -40,6 +42,7 @@ export default function Profile() {
   );
 
   const [formData, setFormData] = useState({
+    name: "",
     bodyWeight: "",
     squat: "",
     bench: "",
@@ -64,6 +67,7 @@ export default function Profile() {
     try {
       await updateProfileMutation.mutateAsync({
         athleteId,
+        name: formData.name || undefined,
         bodyWeight: formData.bodyWeight ? parseFloat(formData.bodyWeight) : undefined,
         squat: formData.squat ? parseFloat(formData.squat) : undefined,
         bench: formData.bench ? parseFloat(formData.bench) : undefined,
@@ -158,6 +162,7 @@ export default function Profile() {
   useMemo(() => {
     if (athlete) {
       setFormData({
+        name: athlete.name || "",
         bodyWeight: athlete.bodyWeight?.toString() || "",
         squat: athlete.squat?.toString() || "",
         bench: athlete.bench?.toString() || "",
@@ -269,15 +274,29 @@ export default function Profile() {
           </div>
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="relative group">
-              <Avatar className="w-24 h-24 md:w-32 md:h-32 border-4 border-accent/20 group-hover:border-accent transition-all duration-500">
-                <AvatarImage src={athlete.avatarUrl || ""} />
-                <AvatarFallback className="bg-card text-accent text-3xl font-black">
-                  {athlete.name.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Avatar className="w-24 h-24 md:w-32 md:h-32 border-4 border-accent/20 group-hover:border-accent transition-all duration-500 cursor-pointer">
+                    <AvatarImage src={athlete.avatarUrl || ""} className="object-cover" />
+                    <AvatarFallback className="bg-card text-accent text-3xl font-black">
+                      {athlete.name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                </DialogTrigger>
+                <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 overflow-hidden bg-transparent border-none shadow-none flex items-center justify-center">
+                  <VisuallyHidden>
+                    <DialogTitle>{athlete.name}'s Profile Picture</DialogTitle>
+                  </VisuallyHidden>
+                  <img
+                    src={athlete.avatarUrl || ""}
+                    alt={athlete.name}
+                    className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                  />
+                </DialogContent>
+              </Dialog>
               <label
                 htmlFor="pfp-upload"
-                className="absolute bottom-0 right-0 bg-accent text-black p-2 rounded-full cursor-pointer hover:scale-110 transition-transform shadow-lg"
+                className="absolute bottom-0 right-0 bg-accent text-black p-2 rounded-full cursor-pointer hover:scale-110 transition-transform shadow-lg z-10"
               >
                 {uploading ? <div className="w-5 h-5 animate-spin border-2 border-black border-t-transparent rounded-full" /> : <Upload className="w-5 h-5" />}
               </label>
@@ -377,23 +396,37 @@ export default function Profile() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {[
-                { label: "BW", key: "bodyWeight" },
-                { label: "Squat", key: "squat" },
-                { label: "Bench", key: "bench" },
-                { label: "DL", key: "deadlift" },
-                { label: "OHP", key: "ohp" },
-              ].map((field) => (
-                <div key={field.key}>
-                  <Label className="text-accent uppercase font-bold text-[10px] mb-1 block">{field.label}</Label>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <Label className="text-accent uppercase font-bold text-[10px] mb-1 block">Full Name</Label>
                   <Input
-                    type="number"
-                    value={formData[field.key as keyof typeof formData]}
-                    onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Enter your name"
                   />
                 </div>
-              ))}
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {[
+                  { label: "BW", key: "bodyWeight" },
+                  { label: "Squat", key: "squat" },
+                  { label: "Bench", key: "bench" },
+                  { label: "DL", key: "deadlift" },
+                  { label: "OHP", key: "ohp" },
+                ].map((field) => (
+                  <div key={field.key}>
+                    <Label className="text-accent uppercase font-bold text-[10px] mb-1 block">{field.label}</Label>
+                    <Input
+                      type="number"
+                      value={formData[field.key as keyof typeof formData]}
+                      onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
             <div className="mt-6 flex gap-3">
               <Button className="btn-dramatic flex-1" onClick={handleSave}>Save PRs</Button>

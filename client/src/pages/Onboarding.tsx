@@ -118,7 +118,7 @@ export default function Onboarding() {
                                 <div className="flex flex-col items-center gap-6 mb-8">
                                     <div className="relative group">
                                         <Avatar className="w-32 h-32 border-4 border-accent/20 group-hover:border-accent transition-all duration-500">
-                                            <AvatarImage src={formData.avatarUrl} />
+                                            <AvatarImage src={formData.avatarUrl} className="object-cover" />
                                             <AvatarFallback className="bg-card text-accent">
                                                 <Camera className="w-10 h-10" />
                                             </AvatarFallback>

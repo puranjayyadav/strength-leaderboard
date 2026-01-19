@@ -7,6 +7,8 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { Trophy, LogIn, LogOut, ArrowUpDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 // getLoginUrl removed
 
 export default function Leaderboard() {
@@ -184,10 +186,24 @@ export default function Leaderboard() {
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
-                            <Avatar className="w-12 h-12 border-2 border-accent/20">
-                              <AvatarImage src={athlete.avatarUrl || ""} />
-                              <AvatarFallback className="bg-muted text-sm font-black">{athlete.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Avatar className="w-12 h-12 border-2 border-accent/20 cursor-pointer hover:scale-105 transition-transform">
+                                  <AvatarImage src={athlete.avatarUrl || ""} className="object-cover" />
+                                  <AvatarFallback className="bg-muted text-sm font-black">{athlete.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 overflow-hidden bg-transparent border-none shadow-none flex items-center justify-center">
+                                <VisuallyHidden>
+                                  <DialogTitle>{athlete.name}'s Profile Picture</DialogTitle>
+                                </VisuallyHidden>
+                                <img
+                                  src={athlete.avatarUrl || ""}
+                                  alt={athlete.name}
+                                  className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                                />
+                              </DialogContent>
+                            </Dialog>
                             <div className="font-bold text-foreground group-hover:text-accent transition-colors">
                               {athlete.name}
                             </div>
