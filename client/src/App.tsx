@@ -3,7 +3,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import Leaderboard from "@/pages/Leaderboard";
 import AthleteProfile from "@/pages/AthleteProfile";
-import ImportData from "@/pages/ImportData";
 import Auth from "@/pages/Auth";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -99,7 +98,6 @@ function Router() {
       <Route path={"/onboarding"} component={Onboarding} />
       <Route path={"/"} component={Leaderboard} />
       <Route path={"/profile"} component={Profile} />
-      <Route path={"/import"} component={ImportData} />
       <Route path={"/athlete/:id"} component={AthleteProfile} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
