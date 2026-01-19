@@ -5,8 +5,8 @@ import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
-import { getLoginUrl } from "./const";
 import "./index.css";
+import { supabase } from "./lib/supabase";
 
 const queryClient = new QueryClient();
 
@@ -18,7 +18,7 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  window.location.href = getLoginUrl();
+  window.location.href = "/auth";
 };
 
 queryClient.getQueryCache().subscribe(event => {
@@ -42,6 +42,15 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
+      async headers() {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          return {
+            Authorization: `Bearer ${session.access_token}`,
+          };
+        }
+        return {};
+      },
       fetch(input, init) {
         return globalThis.fetch(input, {
           ...(init ?? {}),

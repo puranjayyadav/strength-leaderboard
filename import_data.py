@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script to import Excel data into the database.
+Script to import Excel data into the database (PostgreSQL version).
 Usage: python3 import_data.py <excel_file> <database_url>
 """
 
@@ -8,19 +8,8 @@ import sys
 import os
 from pathlib import Path
 import openpyxl
-import mysql.connector
+import psycopg2
 from urllib.parse import urlparse
-
-def parse_database_url(url):
-    """Parse DATABASE_URL into connection parameters."""
-    parsed = urlparse(url)
-    return {
-        'host': parsed.hostname,
-        'user': parsed.username,
-        'password': parsed.password,
-        'database': parsed.path.lstrip('/'),
-        'port': parsed.port or 3306,
-    }
 
 def import_excel_data(excel_file, db_url):
     """Import Excel data into the database."""
@@ -48,8 +37,7 @@ def import_excel_data(excel_file, db_url):
     
     # Connect to database
     print("Connecting to database...")
-    db_config = parse_database_url(db_url)
-    conn = mysql.connector.connect(**db_config)
+    conn = psycopg2.connect(db_url)
     cursor = conn.cursor()
     
     # Insert athletes
@@ -79,22 +67,23 @@ def import_excel_data(excel_file, db_url):
             slingshot_bench = float(row.get('Slingshot Bench')) if row.get('Slingshot Bench') else None
             
             sql = """
-            INSERT INTO athletes (name, bodyWeight, squat, bench, deadlift, total, ohp, 
-                                 inclineBench, rdl, revBandBench, revBandSquat, revBandDl, slingshotBench)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE
-            bodyWeight = VALUES(bodyWeight),
-            squat = VALUES(squat),
-            bench = VALUES(bench),
-            deadlift = VALUES(deadlift),
-            total = VALUES(total),
-            ohp = VALUES(ohp),
-            inclineBench = VALUES(inclineBench),
-            rdl = VALUES(rdl),
-            revBandBench = VALUES(revBandBench),
-            revBandSquat = VALUES(revBandSquat),
-            revBandDl = VALUES(revBandDl),
-            slingshotBench = VALUES(slingshotBench)
+            INSERT INTO athletes (name, "bodyWeight", squat, bench, deadlift, total, ohp, 
+                                 "inclineBench", rdl, "revBandBench", "revBandSquat", "revBandDl", "slingshotBench", "createdAt", "updatedAt")
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+            ON CONFLICT (name) DO UPDATE SET
+            "bodyWeight" = EXCLUDED."bodyWeight",
+            squat = EXCLUDED.squat,
+            bench = EXCLUDED.bench,
+            deadlift = EXCLUDED.deadlift,
+            total = EXCLUDED.total,
+            ohp = EXCLUDED.ohp,
+            "inclineBench" = EXCLUDED."inclineBench",
+            rdl = EXCLUDED.rdl,
+            "revBandBench" = EXCLUDED."revBandBench",
+            "revBandSquat" = EXCLUDED."revBandSquat",
+            "revBandDl" = EXCLUDED."revBandDl",
+            "slingshotBench" = EXCLUDED."slingshotBench",
+            "updatedAt" = NOW()
             """
             
             cursor.execute(sql, (
@@ -107,6 +96,9 @@ def import_excel_data(excel_file, db_url):
             
         except Exception as e:
             print(f"✗ Failed to import {name}: {str(e)}")
+            conn.rollback()
+            cursor = conn.cursor()
+            continue
     
     conn.commit()
     cursor.close()
@@ -115,7 +107,11 @@ def import_excel_data(excel_file, db_url):
     print(f"\n✓ Import complete! {inserted} athletes imported.")
 
 if __name__ == "__main__":
-    excel_file = sys.argv[1] if len(sys.argv) > 1 else "/home/ubuntu/upload/StrengthLevel.xlsx"
+    if len(sys.argv) < 2:
+        print("Usage: python3 import_data.py <excel_file> [database_url]")
+        sys.exit(1)
+        
+    excel_file = sys.argv[1]
     db_url = sys.argv[2] if len(sys.argv) > 2 else os.environ.get("DATABASE_URL")
     
     if not db_url:

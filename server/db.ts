@@ -1,15 +1,20 @@
 import { eq, and, desc, asc } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/node-postgres";
+import pkg from 'pg';
+const { Pool } = pkg;
 import { InsertUser, users, athletes, InsertAthlete, weightEntries, InsertWeightEntry, liftRecords, InsertLiftRecord } from "../drizzle/schema";
-import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _pool: InstanceType<typeof Pool> | null = null;
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+      });
+      _db = drizzle(_pool);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -55,9 +60,6 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     if (user.role !== undefined) {
       values.role = user.role;
       updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
     }
 
     if (!values.lastSignedIn) {
@@ -68,7 +70,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = new Date();
     }
 
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
+    await db.insert(users).values(values).onConflictDoUpdate({
+      target: users.openId,
       set: updateSet,
     });
   } catch (error) {
@@ -93,7 +96,7 @@ export async function getUserByOpenId(openId: string) {
 export async function getAllAthletes() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(athletes).orderBy((t) => desc(t.total));
+  return db.select().from(athletes).orderBy(desc(athletes.total));
 }
 
 export async function getAthleteById(id: number) {
@@ -113,9 +116,13 @@ export async function getAthleteByName(name: string) {
 export async function upsertAthlete(data: InsertAthlete) {
   const db = await getDb();
   if (!db) return undefined;
-  await db.insert(athletes).values(data).onDuplicateKeyUpdate({
+
+  // For upserting athletes by name
+  await db.insert(athletes).values(data).onConflictDoUpdate({
+    target: athletes.name,
     set: data,
   });
+
   return getAthleteByName(data.name!);
 }
 
@@ -150,7 +157,7 @@ export async function importAthlete(data: InsertAthlete) {
 export async function getWeightEntriesForAthlete(athleteId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(weightEntries).where(eq(weightEntries.athleteId, athleteId)).orderBy((t) => asc(t.recordedDate));
+  return db.select().from(weightEntries).where(eq(weightEntries.athleteId, athleteId)).orderBy(asc(weightEntries.recordedDate));
 }
 
 export async function addWeightEntry(data: InsertWeightEntry) {
@@ -167,9 +174,9 @@ export async function getLiftRecordsForAthlete(athleteId: number, exerciseType?:
   if (exerciseType) {
     return db.select().from(liftRecords).where(
       and(eq(liftRecords.athleteId, athleteId), eq(liftRecords.exerciseType, exerciseType))
-    ).orderBy((t) => asc(t.recordedDate));
+    ).orderBy(asc(liftRecords.recordedDate));
   }
-  return db.select().from(liftRecords).where(eq(liftRecords.athleteId, athleteId)).orderBy((t) => asc(t.recordedDate));
+  return db.select().from(liftRecords).where(eq(liftRecords.athleteId, athleteId)).orderBy(asc(liftRecords.recordedDate));
 }
 
 export async function addLiftRecord(data: InsertLiftRecord) {
@@ -188,18 +195,18 @@ export async function updateLiftRecord(id: number, data: Partial<InsertLiftRecor
 export async function getLeaderboardByExercise(exerciseType: string) {
   const db = await getDb();
   if (!db) return [];
-  
+
   if (exerciseType === 'total') {
-    return db.select().from(athletes).orderBy((t) => desc(t.total));
+    return db.select().from(athletes).orderBy(desc(athletes.total));
   } else if (exerciseType === 'squat') {
-    return db.select().from(athletes).orderBy((t) => desc(t.squat));
+    return db.select().from(athletes).orderBy(desc(athletes.squat));
   } else if (exerciseType === 'bench') {
-    return db.select().from(athletes).orderBy((t) => desc(t.bench));
+    return db.select().from(athletes).orderBy(desc(athletes.bench));
   } else if (exerciseType === 'deadlift') {
-    return db.select().from(athletes).orderBy((t) => desc(t.deadlift));
+    return db.select().from(athletes).orderBy(desc(athletes.deadlift));
   } else if (exerciseType === 'ohp') {
-    return db.select().from(athletes).orderBy((t) => desc(t.ohp));
+    return db.select().from(athletes).orderBy(desc(athletes.ohp));
   }
-  
-  return db.select().from(athletes).orderBy((t) => desc(t.total));
+
+  return db.select().from(athletes).orderBy(desc(athletes.total));
 }

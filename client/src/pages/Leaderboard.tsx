@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { Link } from "wouter";
 import { Trophy, LogIn, LogOut } from "lucide-react";
-import { getLoginUrl } from "@/const";
+// getLoginUrl removed
 
 export default function Leaderboard() {
   const { user, isAuthenticated, logout, loading } = useAuth();
@@ -61,12 +61,12 @@ export default function Leaderboard() {
                   </Button>
                 </>
               ) : (
-                <a href={getLoginUrl()}>
-                  <Button className="btn-dramatic">
+                <Link href="/auth">
+                  <Button className="btn-dramatic text-white">
                     <LogIn className="w-4 h-4 mr-2" />
                     Login
                   </Button>
-                </a>
+                </Link>
               )}
             </div>
           </div>
