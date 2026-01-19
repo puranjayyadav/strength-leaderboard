@@ -23,6 +23,9 @@ export default function Profile() {
   const [isAddingLift, setIsAddingLift] = useState(false);
   const [selectedAthleteId, setSelectedAthleteId] = useState<number | null>(null);
   const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [newGymName, setNewGymName] = useState("");
+  const [newGymSlug, setNewGymSlug] = useState("");
+  const [newGymCode, setNewGymCode] = useState("");
 
   const { data: allUsers = [], refetch: refetchUsers } = trpc.admin.listUsers.useQuery(undefined, {
     enabled: user?.role === 'admin'
@@ -74,6 +77,7 @@ export default function Profile() {
   const addWeightMutation = trpc.athlete.addWeight.useMutation();
   const joinGymMutation = trpc.gym.join.useMutation();
   const leaveGymMutation = trpc.gym.leave.useMutation();
+  const createGymMutation = trpc.gym.create.useMutation();
 
   const [gymInviteCode, setGymInviteCode] = useState("");
   const [isChangingGym, setIsChangingGym] = useState(false);
@@ -181,6 +185,35 @@ export default function Profile() {
       refetchGymRequests();
     } catch (e: any) {
       toast.error(e.message || "Failed to update request");
+    }
+  };
+
+  const handleGymNameChange = (name: string) => {
+    setNewGymName(name);
+    // Auto-generate slug
+    const slug = name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+    setNewGymSlug(slug);
+    // Auto-generate invite code
+    const prefix = (name.match(/[A-Z]/g) || name.substring(0, 3).toUpperCase().split('')).slice(0, 3).join('').toUpperCase().padEnd(3, 'X');
+    const code = `${prefix}${Math.floor(100 + Math.random() * 899)}`;
+    setNewGymCode(code);
+  };
+
+  const handleCreateGym = async () => {
+    if (!newGymName || !newGymSlug || !newGymCode) return;
+    try {
+      await createGymMutation.mutateAsync({
+        name: newGymName,
+        slug: newGymSlug,
+        inviteCode: newGymCode,
+      });
+      toast.success(`Gym "${newGymName}" created successfully!`);
+      setNewGymName("");
+      setNewGymSlug("");
+      setNewGymCode("");
+      refetchAthlete();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to create gym");
     }
   };
 
@@ -783,7 +816,7 @@ export default function Profile() {
                           <p className="text-[8px] text-muted-foreground">Requested {new Date(req.createdAt).toLocaleDateString()}</p>
                         </div>
                         <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${req.status === 'approved' ? 'bg-green-500/20 text-green-500' :
-                            req.status === 'rejected' ? 'bg-red-500/20 text-red-500' : 'bg-yellow-500/20 text-yellow-500'
+                          req.status === 'rejected' ? 'bg-red-500/20 text-red-500' : 'bg-yellow-500/20 text-yellow-500'
                           }`}>
                           {req.status}
                         </span>
@@ -812,6 +845,47 @@ export default function Profile() {
                   {gymRequests.length === 0 && (
                     <p className="text-center text-xs text-muted-foreground italic py-8">No gym requests.</p>
                   )}
+                </div>
+              </Card>
+
+              <Card className="card-dramatic p-6">
+                <h3 className="text-xs font-black uppercase tracking-widest text-accent mb-6">Create New Gym</h3>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-2 block">Gym Name</Label>
+                    <Input
+                      placeholder="e.g. Iron Paradise"
+                      value={newGymName}
+                      onChange={(e) => handleGymNameChange(e.target.value)}
+                      className="bg-card/50 border-border h-10"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-2 block">Slug (URL-friendly)</Label>
+                    <Input
+                      placeholder="e.g. iron-paradise"
+                      value={newGymSlug}
+                      onChange={(e) => setNewGymSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+                      className="bg-card/50 border-border h-10 font-mono text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-2 block">Invite Code</Label>
+                    <Input
+                      placeholder="e.g. IRON123"
+                      value={newGymCode}
+                      onChange={(e) => setNewGymCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                      maxLength={12}
+                      className="bg-card/50 border-border h-10 font-mono text-xs uppercase"
+                    />
+                  </div>
+                  <Button
+                    className="btn-dramatic w-full h-10 uppercase font-black"
+                    onClick={handleCreateGym}
+                    disabled={!newGymName || !newGymSlug || !newGymCode || createGymMutation.isPending}
+                  >
+                    {createGymMutation.isPending ? "Creating..." : "Create Gym"}
+                  </Button>
                 </div>
               </Card>
 
