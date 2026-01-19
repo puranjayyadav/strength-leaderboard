@@ -69,16 +69,14 @@ export default function Onboarding() {
     const handleRequestGym = async () => {
         if (!requestedGymName) return;
         try {
-            const newGym: any = await requestGymMutation.mutateAsync({ name: requestedGymName });
-            toast.success("Gym Space created!");
-            if (newGym?.inviteCode) {
-                setFormData(prev => ({ ...prev, gymInviteCode: newGym.inviteCode }));
-            }
+            await requestGymMutation.mutateAsync({ name: requestedGymName });
+            toast.success("Request sent! Admin will approve it soon.");
+            setFormData(prev => ({ ...prev, gymInviteCode: "" })); // Keep as solo for now
             setRequestedGymName("");
             setIsRequestingGym(false);
             setStep(4); // Move to review step
         } catch (e: any) {
-            toast.error(e.message || "Failed to create gym");
+            toast.error(e.message || "Failed to send request");
         }
     };
 

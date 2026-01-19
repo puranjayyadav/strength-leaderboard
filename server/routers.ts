@@ -84,34 +84,12 @@ export const appRouter = router({
       .input(z.object({ name: z.string(), location: z.string().optional() }))
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user) throw new Error("Unauthorized");
-
-        // The user requested that gyms are directly added.
-        // We create the gym immediately and record the request as approved.
-        const slug = input.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
-        const prefix = (input.name.match(/[A-Z]/g) || input.name.substring(0, 3).toUpperCase().split('')).slice(0, 3).join('').toUpperCase().padEnd(3, 'X');
-        const inviteCode = `${prefix}${Math.floor(100 + Math.random() * 899)}`;
-
-        const gym = await createGym({
+        return requestGymAdd({
           name: input.name,
-          slug,
-          inviteCode,
-          createdBy: ctx.user.id,
+          location: input.location,
+          requestedBy: ctx.user.id,
+          status: 'pending'
         });
-
-        if (gym) {
-          await requestGymAdd({
-            name: input.name,
-            location: input.location,
-            requestedBy: ctx.user.id,
-            status: 'approved'
-          });
-
-          if (ctx.user.athleteId) {
-            await updateAthleteGym(ctx.user.athleteId, gym.id);
-          }
-        }
-
-        return gym;
       }),
   }),
 
