@@ -46,10 +46,12 @@ export const athletes = pgTable("athletes", {
   revBandSquat: decimal("revBandSquat", { precision: 6, scale: 2 }),
   revBandDl: decimal("revBandDl", { precision: 6, scale: 2 }),
   slingshotBench: decimal("slingshotBench", { precision: 6, scale: 2 }),
+  email: varchar("email", { length: 320 }).unique(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 }, (table) => ({
   totalIdx: index("athletes_total_idx").on(table.total),
+  emailIdx: index("athletes_email_idx").on(table.email),
 }));
 
 export type Athlete = typeof athletes.$inferSelect;

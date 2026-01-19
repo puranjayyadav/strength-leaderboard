@@ -111,3 +111,4 @@ temp/
 test-db.cjs
 test-pooler.cjs
 .vercel
+.env*.local

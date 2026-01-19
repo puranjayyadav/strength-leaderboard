@@ -109,6 +109,13 @@ export async function getAthleteById(id: number) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getAthleteByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(athletes).where(eq(athletes.email, email)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
 export async function getAthleteByName(name: string) {
   const db = await getDb();
   if (!db) return undefined;
@@ -144,7 +151,12 @@ export async function importAthlete(data: InsertAthlete) {
     throw new Error("Athlete name is required for import");
   }
 
-  const existing = await getAthleteByName(data.name);
+  let existing = data.email ? await getAthleteByEmail(data.email) : undefined;
+
+  if (!existing) {
+    existing = await getAthleteByName(data.name);
+  }
+
   if (existing) {
     // Update existing athlete
     await db.update(athletes).set(data).where(eq(athletes.id, existing.id));
@@ -236,11 +248,13 @@ export async function syncUserAthlete(user: User): Promise<User> {
   const db = await getDb();
   if (!db) return user;
 
-  // Try to find an athlete with the same name
-  const existingAthlete = await getAthleteByName(user.name || "");
-  if (existingAthlete) {
-    await linkUserToAthlete(user.id, existingAthlete.id);
-    return { ...user, athleteId: existingAthlete.id };
+  // Try to find an athlete with the same email
+  if (user.email) {
+    const existingAthlete = await getAthleteByEmail(user.email);
+    if (existingAthlete) {
+      await linkUserToAthlete(user.id, existingAthlete.id);
+      return { ...user, athleteId: existingAthlete.id };
+    }
   }
 
   // WE NO LONGER AUTO-CREATE. The user will be prompted on the frontend.

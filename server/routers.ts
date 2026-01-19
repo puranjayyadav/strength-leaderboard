@@ -143,6 +143,7 @@ export const appRouter = router({
         const total = (input.squat || 0) + (input.bench || 0) + (input.deadlift || 0);
         const athlete = await importAthlete({
           name: input.name,
+          email: ctx.user.email,
           squat: input.squat ? String(input.squat) : null,
           bench: input.bench ? String(input.bench) : null,
           deadlift: input.deadlift ? String(input.deadlift) : null,
