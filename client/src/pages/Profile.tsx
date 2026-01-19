@@ -7,7 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { ArrowLeft, Edit2, Save, X, Plus, TrendingUp, History, Camera, Upload } from "lucide-react";
+import { ArrowLeft, Edit2, Save, X, Plus, TrendingUp, History, Camera, Upload, MapPin } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -61,6 +61,24 @@ export default function Profile() {
   const updateProfileMutation = trpc.athlete.updateProfile.useMutation();
   const addLiftMutation = trpc.athlete.addLift.useMutation();
   const addWeightMutation = trpc.athlete.addWeight.useMutation();
+  const joinGymMutation = trpc.gym.join.useMutation();
+
+  const [gymInviteCode, setGymInviteCode] = useState("");
+  const { data: gym } = trpc.gym.getById.useQuery(
+    { id: athlete?.gymId || 0 },
+    { enabled: !!athlete?.gymId }
+  );
+
+  const handleJoinGym = async () => {
+    try {
+      await joinGymMutation.mutateAsync({ inviteCode: gymInviteCode });
+      toast.success("Joined Gym Space!");
+      setGymInviteCode("");
+      refetchAthlete();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to join gym");
+    }
+  };
 
   const handleSave = async () => {
     if (!athleteId) return;
@@ -310,13 +328,22 @@ export default function Profile() {
               />
             </div>
             <div className="text-center md:text-left">
-              <h1 className="text-4xl md:text-5xl font-bold uppercase tracking-wider mb-1">
+              <h1 className="text-4xl md:text-5xl font-black uppercase tracking-wider mb-2">
                 {athlete.name}
               </h1>
-              <div className="flex items-center justify-center md:justify-start gap-4 text-sm text-muted-foreground uppercase font-bold tracking-tighter">
-                <span className="text-accent">Elite Athlete</span>
-                <span>•</span>
-                <span>{athlete.bodyWeight ? `${athlete.bodyWeight} lbs` : "No BW"}</span>
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
+                <div className="flex items-center gap-2 px-3 py-1 bg-accent/10 border border-accent/20 rounded-full">
+                  <MapPin className="w-3 h-3 text-accent" />
+                  <span className="text-[10px] uppercase font-black text-accent tracking-widest">
+                    {gym ? gym.name : "Global Space"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1 bg-muted/30 border border-border rounded-full">
+                  <TrendingUp className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">
+                    {athlete.bodyWeight ? `${athlete.bodyWeight} lbs` : "No BW"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -434,6 +461,69 @@ export default function Profile() {
             </div>
           </Card>
         )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+          <div className="lg:col-span-1">
+            <Card className="card-dramatic p-6 h-full">
+              <h3 className="text-xs uppercase font-black text-accent tracking-widest mb-6">Your Gym Space</h3>
+              {gym ? (
+                <div className="space-y-6">
+                  <div className="p-4 bg-accent/5 border-2 border-accent/20 rounded-lg">
+                    <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Affiliated With</p>
+                    <p className="text-xl font-black uppercase italic text-accent">{gym.name}</p>
+                    <div className="mt-4 pt-4 border-t border-accent/10">
+                      <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-2">Share Invite Code</p>
+                      <div className="bg-black/40 p-3 rounded font-mono font-black text-center border border-accent/10 select-all cursor-pointer">
+                        {gym.inviteCode}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <p className="text-xs text-muted-foreground font-bold uppercase italic leading-relaxed">
+                    You are currently a solo lifter. Join a gym space to compete with your team.
+                  </p>
+                  <div className="space-y-3">
+                    <Label className="text-[10px] uppercase font-black text-accent tracking-widest block">Invite Code</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="CODE123"
+                        value={gymInviteCode}
+                        onChange={(e) => setGymInviteCode(e.target.value.toUpperCase())}
+                        className="bg-card/50 border-border uppercase font-black h-12"
+                      />
+                      <Button
+                        className="btn-dramatic px-6 h-12 font-black uppercase"
+                        onClick={handleJoinGym}
+                        disabled={!gymInviteCode || joinGymMutation.isPending}
+                      >
+                        Join
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Card>
+          </div>
+
+          <div className="lg:col-span-2">
+            {/* Quick Stats Grid can go here if we want or just let it stay above */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: "Squat", value: athlete.squat },
+                { label: "Bench", value: athlete.bench },
+                { label: "Deadlift", value: athlete.deadlift },
+                { label: "Total", value: athlete.total },
+              ].map((stat) => (
+                <Card key={stat.label} className="card-dramatic p-4 text-center">
+                  <p className="text-[10px] text-muted-foreground uppercase font-black tracking-tighter mb-1">{stat.label}</p>
+                  <p className="text-2xl font-black text-accent">{stat.value || "0"}</p>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {/* Charts & History */}
         <Tabs defaultValue="charts" className="mb-12">

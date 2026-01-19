@@ -25,6 +25,7 @@ export default function Onboarding() {
         deadlift: "",
         ohp: "",
         avatarUrl: "",
+        gymInviteCode: "",
     });
     const [uploading, setUploading] = useState(false);
 
@@ -38,6 +39,14 @@ export default function Onboarding() {
     const setupMutation = trpc.athlete.setupProfile.useMutation({
         onSuccess: async () => {
             await utils.auth.me.invalidate();
+            // If they entered an invite code, join the gym
+            if (formData.gymInviteCode) {
+                try {
+                    await joinGymMutation.mutateAsync({ inviteCode: formData.gymInviteCode });
+                } catch (e) {
+                    console.warn("Failed to join gym during onboarding, but profile was created.");
+                }
+            }
             toast.success("Profile created! Welcome to the leaderboard.");
             setLocation("/");
         },
@@ -45,6 +54,25 @@ export default function Onboarding() {
             toast.error(err.message || "Failed to create profile. Please try again.");
         }
     });
+
+    const joinGymMutation = trpc.gym.join.useMutation();
+    const createGymMutation = trpc.gym.create.useMutation();
+    const { data: gyms = [] } = trpc.gym.getAll.useQuery();
+
+    const [isCreatingGym, setIsCreatingGym] = useState(false);
+    const [newGym, setNewGym] = useState({ name: "", inviteCode: "", slug: "" });
+
+    const handleCreateGym = async () => {
+        try {
+            await createGymMutation.mutateAsync(newGym);
+            toast.success("Gym Space created!");
+            setIsCreatingGym(false);
+            setFormData(prev => ({ ...prev, gymInviteCode: newGym.inviteCode }));
+            setStep(4);
+        } catch (e: any) {
+            toast.error(e.message || "Failed to create gym");
+        }
+    };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -108,13 +136,13 @@ export default function Onboarding() {
                     <div className="absolute top-0 left-0 w-full h-1 bg-muted">
                         <div
                             className="h-full bg-accent transition-all duration-500"
-                            style={{ width: `${(step / 2) * 100}%` }}
+                            style={{ width: `${(step / 4) * 100}%` }}
                         />
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-8">
                         {step === 1 && (
-                            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                            <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                                 <div className="flex flex-col items-center gap-6 mb-8">
                                     <div className="relative group">
                                         <Avatar className="w-32 h-32 border-4 border-accent/20 group-hover:border-accent transition-all duration-500">
@@ -243,12 +271,148 @@ export default function Onboarding() {
                                         Back
                                     </Button>
                                     <Button
-                                        type="submit"
-                                        disabled={setupMutation.isPending}
+                                        type="button"
+                                        onClick={() => setStep(3)}
                                         className="flex-[2] btn-dramatic h-14 text-lg"
                                     >
-                                        {setupMutation.isPending ? "Saving..." : "Enter Leaderboard"}
-                                        <Save className="ml-2 w-5 h-5" />
+                                        Next (Gym Space) <ChevronRight className="ml-2 w-5 h-5" />
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 3 && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                                <h2 className="text-xs uppercase font-black text-accent tracking-widest mb-4">Join a Gym Space</h2>
+                                <p className="text-muted-foreground text-sm mb-6 font-bold uppercase italic">
+                                    Connect with your community. Join a space or lift solo.
+                                </p>
+
+                                <div className="space-y-6">
+                                    {!isCreatingGym ? (
+                                        <div className="space-y-4">
+                                            <div
+                                                className="p-4 bg-accent/10 border-2 border-accent/20 rounded-lg cursor-pointer hover:border-accent group transition-all"
+                                                onClick={() => {
+                                                    setFormData(prev => ({ ...prev, gymInviteCode: "FIT123" }));
+                                                    setStep(4);
+                                                }}
+                                            >
+                                                <h3 className="font-black uppercase text-accent group-hover:scale-105 transition-transform origin-left">Join Fitness Factory</h3>
+                                                <p className="text-[10px] text-muted-foreground uppercase font-bold italic">The default shared community space.</p>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label className="text-[10px] uppercase font-bold text-muted-foreground">Or Enter Invite Code</Label>
+                                                <Input
+                                                    placeholder="CODE123"
+                                                    value={formData.gymInviteCode}
+                                                    onChange={(e) => setFormData(prev => ({ ...prev, gymInviteCode: e.target.value.toUpperCase() }))}
+                                                    className="bg-card/50 border-border h-12"
+                                                />
+                                            </div>
+
+                                            <div className="relative py-4">
+                                                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+                                                <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest"><span className="bg-card px-2 text-accent italic">OR</span></div>
+                                            </div>
+
+                                            <div className="flex flex-col gap-3">
+                                                <Button type="button" variant="outline" className="w-full h-12 uppercase font-black italic tracking-widest" onClick={() => setIsCreatingGym(true)}>
+                                                    Create New Space
+                                                </Button>
+                                                <Button type="button" variant="ghost" className="w-full text-muted-foreground underline text-[10px] uppercase font-bold" onClick={() => {
+                                                    setFormData(prev => ({ ...prev, gymInviteCode: "" }));
+                                                    setStep(4);
+                                                }}>
+                                                    Skip for now (Global Leaderboard only)
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <Label className="text-[10px] uppercase font-bold text-muted-foreground">Gym Name</Label>
+                                                <Input
+                                                    placeholder="e.g. Hoboken Barbell"
+                                                    value={newGym.name}
+                                                    onChange={(e) => {
+                                                        const name = e.target.value;
+                                                        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                                                        setNewGym(prev => ({ ...prev, name, slug }));
+                                                    }}
+                                                    className="bg-card/50 border-border h-12"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-[10px] uppercase font-bold text-muted-foreground">Invite Code</Label>
+                                                <Input
+                                                    placeholder="Choose a unique code"
+                                                    value={newGym.inviteCode}
+                                                    onChange={(e) => setNewGym(prev => ({ ...prev, inviteCode: e.target.value.toUpperCase() }))}
+                                                    className="bg-card/50 border-border h-12"
+                                                />
+                                            </div>
+                                            <div className="flex gap-4 pt-4">
+                                                <Button type="button" className="btn-dramatic flex-1 h-12 uppercase font-black italic" onClick={handleCreateGym} disabled={!newGym.name || !newGym.inviteCode}>Create</Button>
+                                                <Button type="button" variant="outline" className="flex-1 h-12 uppercase font-black" onClick={() => setIsCreatingGym(false)}>Back</Button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {!isCreatingGym && (
+                                    <div className="flex gap-4 pt-8">
+                                        <Button type="button" variant="outline" className="flex-1 h-14 uppercase font-bold" onClick={() => setStep(2)}>Back</Button>
+                                        <Button type="button" className="flex-[2] btn-dramatic h-14 text-lg" onClick={() => setStep(4)} disabled={!formData.gymInviteCode}>
+                                            Review <ChevronRight className="ml-2 w-5 h-5" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {step === 4 && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                                <h2 className="text-xs uppercase font-black text-accent tracking-widest mb-4">Final Review</h2>
+
+                                <Card className="p-6 border-accent/40 bg-accent/5 card-dramatic">
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center border-b border-border pb-2">
+                                            <span className="text-muted-foreground text-[10px] uppercase font-black tracking-widest">Athlete</span>
+                                            <span className="font-black uppercase italic">{formData.name}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center border-b border-border pb-2">
+                                            <span className="text-muted-foreground text-[10px] uppercase font-black tracking-widest">Gym Space</span>
+                                            <span className="font-black text-accent uppercase italic">{formData.gymInviteCode || "Global Only"}</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4 pt-4">
+                                            <div className="text-center p-3 bg-card border border-border rounded-lg">
+                                                <div className="text-[10px] text-muted-foreground uppercase font-bold">Squat</div>
+                                                <div className="text-2xl font-black text-accent">{formData.squat || "0"}</div>
+                                            </div>
+                                            <div className="text-center p-3 bg-card border border-border rounded-lg">
+                                                <div className="text-[10px] text-muted-foreground uppercase font-bold">Bench</div>
+                                                <div className="text-2xl font-black text-accent">{formData.bench || "0"}</div>
+                                            </div>
+                                            <div className="text-center p-3 bg-card border border-border rounded-lg">
+                                                <div className="text-[10px] text-muted-foreground uppercase font-bold">Deadlift</div>
+                                                <div className="text-2xl font-black text-accent">{formData.deadlift || "0"}</div>
+                                            </div>
+                                            <div className="text-center p-3 bg-card border border-border rounded-lg">
+                                                <div className="text-[10px] text-muted-foreground uppercase font-bold">Total</div>
+                                                <div className="text-2xl font-black text-accent">
+                                                    {(parseFloat(formData.squat || "0") + parseFloat(formData.bench || "0") + parseFloat(formData.deadlift || "0")).toFixed(1)}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Card>
+
+                                <div className="flex gap-4">
+                                    <Button type="button" variant="outline" className="flex-1 h-14 uppercase font-bold" onClick={() => setStep(3)}>Back</Button>
+                                    <Button type="submit" className="flex-[2] btn-dramatic h-14 text-lg" disabled={setupMutation.isPending}>
+                                        {setupMutation.isPending ? "Joining the Elite..." : "Finalize Profile"} <Save className="ml-2 w-5 h-5" />
                                     </Button>
                                 </div>
                             </div>

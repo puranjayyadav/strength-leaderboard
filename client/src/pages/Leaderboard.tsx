@@ -3,21 +3,37 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Trophy, LogIn, LogOut, ArrowUpDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MapPin } from "lucide-react";
 // getLoginUrl removed
 
 export default function Leaderboard() {
   const { user, isAuthenticated, logout, loading } = useAuth();
   const [sortBy, setSortBy] = useState<"total" | "squat" | "bench" | "deadlift" | "ohp">("total");
+  const [selectedGymId, setSelectedGymId] = useState<number | undefined>(undefined);
 
+  const { data: gyms = [] } = trpc.gym.getAll.useQuery();
   const { data: athletes = [], isLoading } = trpc.leaderboard.getByExercise.useQuery({
     exercise: sortBy,
+    gymId: selectedGymId,
   });
+
+  const { data: athlete } = trpc.athlete.getById.useQuery(
+    { id: (user as any)?.athleteId || 0 },
+    { enabled: !!(user as any)?.athleteId && selectedGymId === undefined }
+  );
+
+  useEffect(() => {
+    if (athlete?.gymId && selectedGymId === undefined) {
+      setSelectedGymId(athlete.gymId);
+    }
+  }, [athlete?.gymId, selectedGymId]);
 
   const exercises = [
     { id: "total", label: "Total", icon: "🏆" },
@@ -37,35 +53,56 @@ export default function Leaderboard() {
               <h1 className="text-5xl md:text-6xl font-bold uppercase tracking-wider mb-2">
                 Strength Leaderboard
               </h1>
-              <p className="text-muted-foreground text-lg">
-                Track the elite. Dominate the rankings.
+              <p className="text-muted-foreground text-lg uppercase font-bold tracking-widest italic flex items-center gap-2">
+                {selectedGymId
+                  ? gyms.find(g => g.id === selectedGymId)?.name
+                  : "Global Rankings"}
+                <MapPin className="w-4 h-4 text-accent" />
               </p>
             </div>
-            <div className="flex gap-3">
-              {loading ? null : isAuthenticated ? (
-                <>
-                  <Link href="/profile">
-                    <Button className="btn-dramatic">
-                      My Profile
+            <div className="flex flex-col md:flex-row gap-3 items-center">
+              <Select
+                value={selectedGymId?.toString() || "global"}
+                onValueChange={(val) => setSelectedGymId(val === "global" ? undefined : parseInt(val))}
+              >
+                <SelectTrigger className="w-[200px] bg-card/50 border-accent/20 font-bold uppercase text-xs h-10">
+                  <SelectValue placeholder="Select Space" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="global" className="font-bold uppercase text-xs">🌍 Global Leaderboard</SelectItem>
+                  {gyms.map(gym => (
+                    <SelectItem key={gym.id} value={gym.id.toString()} className="font-bold uppercase text-xs">
+                      🏟️ {gym.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex gap-3">
+                {loading ? null : isAuthenticated ? (
+                  <>
+                    <Link href="/profile">
+                      <Button className="btn-dramatic">
+                        My Profile
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="outline"
+                      onClick={() => logout()}
+                      className="uppercase font-bold"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Logout
+                    </Button>
+                  </>
+                ) : (
+                  <Link href="/auth">
+                    <Button className="btn-dramatic text-white">
+                      <LogIn className="w-4 h-4 mr-2" />
+                      Login
                     </Button>
                   </Link>
-                  <Button
-                    variant="outline"
-                    onClick={() => logout()}
-                    className="uppercase font-bold"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Logout
-                  </Button>
-                </>
-              ) : (
-                <Link href="/auth">
-                  <Button className="btn-dramatic text-white">
-                    <LogIn className="w-4 h-4 mr-2" />
-                    Login
-                  </Button>
-                </Link>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -2,7 +2,7 @@ import { eq, and, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pkg from 'pg';
 const { Pool } = pkg;
-import { User, InsertUser, users, athletes, InsertAthlete, weightEntries, InsertWeightEntry, liftRecords, InsertLiftRecord } from "../drizzle/schema";
+import { User, InsertUser, users, athletes, InsertAthlete, weightEntries, InsertWeightEntry, liftRecords, InsertLiftRecord, gyms, Gym, InsertGym } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 let _pool: InstanceType<typeof Pool> | null = null;
@@ -207,23 +207,71 @@ export async function updateLiftRecord(id: number, data: Partial<InsertLiftRecor
   return db.update(liftRecords).set(data).where(eq(liftRecords.id, id));
 }
 
-export async function getLeaderboardByExercise(exerciseType: string) {
+export async function getLeaderboardByExercise(exerciseType: string, gymId?: number) {
   const db = await getDb();
   if (!db) return [];
 
-  if (exerciseType === 'total') {
-    return db.select().from(athletes).orderBy(desc(athletes.total));
-  } else if (exerciseType === 'squat') {
-    return db.select().from(athletes).orderBy(desc(athletes.squat));
-  } else if (exerciseType === 'bench') {
-    return db.select().from(athletes).orderBy(desc(athletes.bench));
-  } else if (exerciseType === 'deadlift') {
-    return db.select().from(athletes).orderBy(desc(athletes.deadlift));
-  } else if (exerciseType === 'ohp') {
-    return db.select().from(athletes).orderBy(desc(athletes.ohp));
+  let query = db.select().from(athletes);
+
+  if (gymId) {
+    // @ts-ignore - gymId added to athletes table
+    query = query.where(eq(athletes.gymId, gymId));
   }
 
-  return db.select().from(athletes).orderBy(desc(athletes.total));
+  if (exerciseType === 'total') {
+    return query.orderBy(desc(athletes.total));
+  } else if (exerciseType === 'squat') {
+    return query.orderBy(desc(athletes.squat));
+  } else if (exerciseType === 'bench') {
+    return query.orderBy(desc(athletes.bench));
+  } else if (exerciseType === 'deadlift') {
+    return query.orderBy(desc(athletes.deadlift));
+  } else if (exerciseType === 'ohp') {
+    return query.orderBy(desc(athletes.ohp));
+  }
+
+  return query.orderBy(desc(athletes.total));
+}
+
+// Gym queries
+export async function getAllGyms() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(gyms).orderBy(asc(gyms.name));
+}
+
+export async function getGymById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(gyms).where(eq(gyms.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getGymBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(gyms).where(eq(gyms.slug, slug)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getGymByInviteCode(inviteCode: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(gyms).where(eq(gyms.inviteCode, inviteCode)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createGym(data: InsertGym) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.insert(gyms).values(data).returning();
+  return result[0];
+}
+
+export async function updateAthleteGym(athleteId: number, gymId: number | null) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(athletes).set({ gymId }).where(eq(athletes.id, athleteId));
 }
 // tRPC specific procedure for ensuring a user only modifies their own athlete data
 export async function enforceAthleteOwnership(athleteId: number, user: User | null) {

@@ -48,12 +48,31 @@ export const athletes = pgTable("athletes", {
   slingshotBench: decimal("slingshotBench", { precision: 6, scale: 2 }),
   avatarUrl: text("avatarUrl"),
   email: varchar("email", { length: 320 }).unique(),
+  gymId: integer("gymId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 }, (table) => ({
   totalIdx: index("athletes_total_idx").on(table.total),
   emailIdx: index("athletes_email_idx").on(table.email),
+  gymIdx: index("athletes_gym_idx").on(table.gymId),
 }));
+
+export const gyms = pgTable("gyms", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  inviteCode: varchar("inviteCode", { length: 12 }).notNull().unique(),
+  logoUrl: text("logoUrl"),
+  createdBy: integer("createdBy"), // userId of the creator
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+}, (table) => ({
+  slugIdx: index("gyms_slug_idx").on(table.slug),
+  inviteIdx: index("gyms_invite_idx").on(table.inviteCode),
+}));
+
+export type Gym = typeof gyms.$inferSelect;
+export type InsertGym = typeof gyms.$inferInsert;
 
 export type Athlete = typeof athletes.$inferSelect;
 export type InsertAthlete = typeof athletes.$inferInsert;

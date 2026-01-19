@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
 import { User, InsertUser, users, athletes, InsertAthlete, weightEntries, InsertWeightEntry, liftRecords, InsertLiftRecord } from "../drizzle/schema";
-import { getAllAthletes, getAthleteById, getLiftRecordsForAthlete, getWeightEntriesForAthlete, addLiftRecord, addWeightEntry, updateLiftRecord, updateAthlete, getLeaderboardByExercise, importAthlete, enforceAthleteOwnership, linkUserToAthlete } from "./db";
+import { getAllAthletes, getAthleteById, getLiftRecordsForAthlete, getWeightEntriesForAthlete, addLiftRecord, addWeightEntry, updateLiftRecord, updateAthlete, getLeaderboardByExercise, importAthlete, enforceAthleteOwnership, linkUserToAthlete, getAllGyms, getGymById, getGymBySlug, getGymByInviteCode, createGym, updateAthleteGym } from "./db";
 
 export const appRouter = router({
   system: router({
@@ -23,8 +23,54 @@ export const appRouter = router({
   leaderboard: router({
     getAll: publicProcedure.query(() => getAllAthletes()),
     getByExercise: publicProcedure
-      .input(z.object({ exercise: z.string() }))
-      .query(({ input }) => getLeaderboardByExercise(input.exercise)),
+      .input(z.object({
+        exercise: z.string(),
+        gymId: z.number().optional()
+      }))
+      .query(({ input }) => getLeaderboardByExercise(input.exercise, input.gymId)),
+  }),
+
+  gym: router({
+    getAll: publicProcedure.query(() => getAllGyms()),
+
+    getById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(({ input }) => getGymById(input.id)),
+
+    getBySlug: publicProcedure
+      .input(z.object({ slug: z.string() }))
+      .query(({ input }) => getGymBySlug(input.slug)),
+
+    join: protectedProcedure
+      .input(z.object({ inviteCode: z.string() }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user || !ctx.user.athleteId) throw new Error("No athlete profile found");
+        const gym = await getGymByInviteCode(input.inviteCode);
+        if (!gym) throw new Error("Invalid invite code");
+
+        await updateAthleteGym(ctx.user.athleteId, gym.id);
+        return gym;
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        slug: z.string(),
+        inviteCode: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user) throw new Error("Unauthorized");
+        const gym = await createGym({
+          ...input,
+          createdBy: ctx.user.id,
+        });
+
+        if (gym && ctx.user.athleteId) {
+          await updateAthleteGym(ctx.user.athleteId, gym.id);
+        }
+
+        return gym;
+      }),
   }),
 
   athlete: router({
