@@ -15,10 +15,12 @@ import Onboarding from "@/pages/Onboarding";
 import { useEffect } from "react";
 
 function Router() {
-  const { user, loading } = useAuth();
+  const { user, loading, error } = useAuth();
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
+    if (error) return;
+
     if (!loading) {
       console.log("[Router] Auth state:", {
         hasUser: !!user,
@@ -40,12 +42,34 @@ function Router() {
         }
       }
     }
-  }, [user, loading, location, setLocation]);
+  }, [user, loading, location, setLocation, error]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="max-w-md w-full bg-destructive/10 border border-destructive rounded-lg p-6 text-center">
+          <h2 className="text-xl font-bold text-destructive mb-2">Authentication Error</h2>
+          <p className="text-muted-foreground mb-4">
+            We couldn't verify your identity. This might be a temporary issue.
+          </p>
+          <pre className="text-xs bg-black/10 p-2 rounded text-left overflow-auto max-h-40 mb-4">
+            {error.message}
+          </pre>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:opacity-90 cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
