@@ -62,6 +62,12 @@ export default function Profile() {
     bench: "",
     deadlift: "",
     ohp: "",
+    farmersWalkWeight: "",
+    farmersWalkDistance: "",
+    yokeWalkWeight: "",
+    yokeWalkDistance: "",
+    dipsReps: "",
+    pullUpsReps: "",
     avatarUrl: "",
   });
 
@@ -69,6 +75,7 @@ export default function Profile() {
     exerciseType: "squat",
     weight: "",
     reps: "1",
+    distance: "",
     recordedDate: new Date().toISOString().split('T')[0],
   });
 
@@ -121,6 +128,12 @@ export default function Profile() {
         bench: formData.bench ? parseFloat(formData.bench) : undefined,
         deadlift: formData.deadlift ? parseFloat(formData.deadlift) : undefined,
         ohp: formData.ohp ? parseFloat(formData.ohp) : undefined,
+        farmersWalkWeight: formData.farmersWalkWeight ? parseFloat(formData.farmersWalkWeight) : undefined,
+        farmersWalkDistance: formData.farmersWalkDistance ? parseFloat(formData.farmersWalkDistance) : undefined,
+        yokeWalkWeight: formData.yokeWalkWeight ? parseFloat(formData.yokeWalkWeight) : undefined,
+        yokeWalkDistance: formData.yokeWalkDistance ? parseFloat(formData.yokeWalkDistance) : undefined,
+        dipsReps: formData.dipsReps ? parseInt(formData.dipsReps) : undefined,
+        pullUpsReps: formData.pullUpsReps ? parseInt(formData.pullUpsReps) : undefined,
         avatarUrl: formData.avatarUrl || undefined,
       });
       setIsEditing(false);
@@ -136,8 +149,9 @@ export default function Profile() {
       await addLiftMutation.mutateAsync({
         athleteId,
         exerciseType: newLift.exerciseType,
-        weight: parseFloat(newLift.weight),
-        reps: parseInt(newLift.reps),
+        weight: newLift.weight ? parseFloat(newLift.weight) : undefined,
+        reps: newLift.reps ? parseInt(newLift.reps) : undefined,
+        distance: newLift.distance ? parseFloat(newLift.distance) : undefined,
         recordedDate: newLift.recordedDate,
       });
 
@@ -146,7 +160,7 @@ export default function Profile() {
       // For now, let's just refetch.
 
       setIsAddingLift(false);
-      setNewLift({ ...newLift, weight: "" });
+      setNewLift({ ...newLift, weight: "", reps: "1", distance: "" });
       refetchLifts();
       refetchAthlete();
     } catch (error) {
@@ -272,6 +286,12 @@ export default function Profile() {
         bench: athlete.bench?.toString() || "",
         deadlift: athlete.deadlift?.toString() || "",
         ohp: athlete.ohp?.toString() || "",
+        farmersWalkWeight: athlete.farmersWalkWeight?.toString() || "",
+        farmersWalkDistance: athlete.farmersWalkDistance?.toString() || "",
+        yokeWalkWeight: athlete.yokeWalkWeight?.toString() || "",
+        yokeWalkDistance: athlete.yokeWalkDistance?.toString() || "",
+        dipsReps: athlete.dipsReps?.toString() || "",
+        pullUpsReps: athlete.pullUpsReps?.toString() || "",
         avatarUrl: athlete.avatarUrl || "",
       });
     }
@@ -322,7 +342,7 @@ export default function Profile() {
       .filter(l => l.exerciseType.toLowerCase() === type.toLowerCase())
       .map(entry => ({
         date: new Date(entry.recordedDate).toLocaleDateString(),
-        weight: parseFloat(entry.weight),
+        weight: entry.weight ? parseFloat(entry.weight) : 0,
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   };
@@ -330,7 +350,7 @@ export default function Profile() {
   const weightChartData = weightHistory
     .map((entry) => ({
       date: new Date(entry.recordedDate).toLocaleDateString(),
-      weight: parseFloat(entry.weight),
+      weight: entry.weight ? parseFloat(entry.weight) : 0,
     }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -481,18 +501,37 @@ export default function Profile() {
                   <option value="bench">Bench</option>
                   <option value="deadlift">Deadlift</option>
                   <option value="ohp">OHP</option>
+                  <option value="farmersWalk">Farmers Walk</option>
+                  <option value="yokeWalk">Yoke Walk</option>
+                  <option value="dips">Dips</option>
+                  <option value="pullUps">Pull Ups</option>
                 </select>
               </div>
-              <div>
-                <Label className="text-accent uppercase font-bold text-[10px] mb-2 block">Weight (lbs)</Label>
-                <Input type="number" value={newLift.weight} onChange={(e) => setNewLift({ ...newLift, weight: e.target.value })} />
-              </div>
-              <div>
-                <Label className="text-accent uppercase font-bold text-[10px] mb-2 block">Reps</Label>
-                <Input type="number" value={newLift.reps} onChange={(e) => setNewLift({ ...newLift, reps: e.target.value })} />
-              </div>
+              {['farmersWalk', 'yokeWalk'].includes(newLift.exerciseType) ? (
+                <>
+                  <div>
+                    <Label className="text-accent uppercase font-bold text-[10px] mb-2 block">Weight (lbs)</Label>
+                    <Input type="number" value={newLift.weight} onChange={(e) => setNewLift({ ...newLift, weight: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-accent uppercase font-bold text-[10px] mb-2 block">Distance (m)</Label>
+                    <Input type="number" value={newLift.distance} onChange={(e) => setNewLift({ ...newLift, distance: e.target.value })} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <Label className="text-accent uppercase font-bold text-[10px] mb-2 block">Weight (lbs)</Label>
+                    <Input type="number" value={newLift.weight} onChange={(e) => setNewLift({ ...newLift, weight: e.target.value })} placeholder={['dips', 'pullUps'].includes(newLift.exerciseType) ? "Bodyweight or Added" : ""} />
+                  </div>
+                  <div>
+                    <Label className="text-accent uppercase font-bold text-[10px] mb-2 block">Reps</Label>
+                    <Input type="number" value={newLift.reps} onChange={(e) => setNewLift({ ...newLift, reps: e.target.value })} />
+                  </div>
+                </>
+              )}
               <div className="flex items-end">
-                <Button className="btn-dramatic w-full" onClick={handleAddLift} disabled={!newLift.weight}>
+                <Button className="btn-dramatic w-full" onClick={handleAddLift} disabled={!newLift.weight && !newLift.distance && !newLift.reps}>
                   Add Entry
                 </Button>
               </div>
@@ -529,6 +568,12 @@ export default function Profile() {
                   { label: "Bench", key: "bench" },
                   { label: "DL", key: "deadlift" },
                   { label: "OHP", key: "ohp" },
+                  { label: "F.Walk(W)", key: "farmersWalkWeight" },
+                  { label: "F.Walk(D)", key: "farmersWalkDistance" },
+                  { label: "Y.Walk(W)", key: "yokeWalkWeight" },
+                  { label: "Y.Walk(D)", key: "yokeWalkDistance" },
+                  { label: "Dips(R)", key: "dipsReps" },
+                  { label: "P.Ups(R)", key: "pullUpsReps" },
                 ].map((field) => (
                   <div key={field.key}>
                     <Label className="text-accent uppercase font-bold text-[10px] mb-1 block">{field.label}</Label>

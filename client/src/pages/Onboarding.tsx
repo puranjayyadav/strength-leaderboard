@@ -25,6 +25,12 @@ export default function Onboarding() {
         bench: "",
         deadlift: "",
         ohp: "",
+        farmersWalkWeight: "",
+        farmersWalkDistance: "",
+        yokeWalkWeight: "",
+        yokeWalkDistance: "",
+        dipsReps: "",
+        pullUpsReps: "",
         avatarUrl: "",
         gymInviteCode: "",
     });
@@ -122,6 +128,12 @@ export default function Onboarding() {
             bench: formData.bench ? parseFloat(formData.bench) : undefined,
             deadlift: formData.deadlift ? parseFloat(formData.deadlift) : undefined,
             ohp: formData.ohp ? parseFloat(formData.ohp) : undefined,
+            farmersWalkWeight: formData.farmersWalkWeight ? parseFloat(formData.farmersWalkWeight) : undefined,
+            farmersWalkDistance: formData.farmersWalkDistance ? parseFloat(formData.farmersWalkDistance) : undefined,
+            yokeWalkWeight: formData.yokeWalkWeight ? parseFloat(formData.yokeWalkWeight) : undefined,
+            yokeWalkDistance: formData.yokeWalkDistance ? parseFloat(formData.yokeWalkDistance) : undefined,
+            dipsReps: formData.dipsReps ? parseInt(formData.dipsReps) : undefined,
+            pullUpsReps: formData.pullUpsReps ? parseInt(formData.pullUpsReps) : undefined,
         });
     };
 
@@ -262,6 +274,66 @@ export default function Onboarding() {
                                             value={formData.ohp}
                                             onChange={(e) => setFormData({ ...formData, ohp: e.target.value })}
                                             placeholder="Lbs"
+                                            className="bg-card/50 border-border h-12"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Farmers (W)</Label>
+                                        <Input
+                                            type="number"
+                                            value={formData.farmersWalkWeight}
+                                            onChange={(e) => setFormData({ ...formData, farmersWalkWeight: e.target.value })}
+                                            placeholder="Lbs"
+                                            className="bg-card/50 border-border h-12"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Farmers (D)</Label>
+                                        <Input
+                                            type="number"
+                                            value={formData.farmersWalkDistance}
+                                            onChange={(e) => setFormData({ ...formData, farmersWalkDistance: e.target.value })}
+                                            placeholder="Meters"
+                                            className="bg-card/50 border-border h-12"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Yoke (W)</Label>
+                                        <Input
+                                            type="number"
+                                            value={formData.yokeWalkWeight}
+                                            onChange={(e) => setFormData({ ...formData, yokeWalkWeight: e.target.value })}
+                                            placeholder="Lbs"
+                                            className="bg-card/50 border-border h-12"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Yoke (D)</Label>
+                                        <Input
+                                            type="number"
+                                            value={formData.yokeWalkDistance}
+                                            onChange={(e) => setFormData({ ...formData, yokeWalkDistance: e.target.value })}
+                                            placeholder="Meters"
+                                            className="bg-card/50 border-border h-12"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Dips (R)</Label>
+                                        <Input
+                                            type="number"
+                                            value={formData.dipsReps}
+                                            onChange={(e) => setFormData({ ...formData, dipsReps: e.target.value })}
+                                            placeholder="Reps"
+                                            className="bg-card/50 border-border h-12"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Pull Ups (R)</Label>
+                                        <Input
+                                            type="number"
+                                            value={formData.pullUpsReps}
+                                            onChange={(e) => setFormData({ ...formData, pullUpsReps: e.target.value })}
+                                            placeholder="Reps"
                                             className="bg-card/50 border-border h-12"
                                         />
                                     </div>

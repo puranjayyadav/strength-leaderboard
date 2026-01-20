@@ -158,8 +158,9 @@ export const appRouter = router({
       .input(z.object({
         athleteId: z.number(),
         exerciseType: z.string(),
-        weight: z.number(),
+        weight: z.number().optional(),
         reps: z.number().optional(),
+        distance: z.number().optional(),
         recordedDate: z.string(),
         notes: z.string().optional(),
       }))
@@ -171,8 +172,9 @@ export const appRouter = router({
         return addLiftRecord({
           athleteId: input.athleteId,
           exerciseType: input.exerciseType,
-          weight: String(input.weight),
+          weight: input.weight !== undefined ? String(input.weight) : null,
           reps: input.reps || 1,
+          distance: input.distance !== undefined ? String(input.distance) : null,
           recordedDate: dateStr,
           notes: input.notes,
         });
@@ -223,6 +225,12 @@ export const appRouter = router({
         bench: z.number().optional(),
         deadlift: z.number().optional(),
         ohp: z.number().optional(),
+        farmersWalkWeight: z.number().optional(),
+        farmersWalkDistance: z.number().optional(),
+        yokeWalkWeight: z.number().optional(),
+        yokeWalkDistance: z.number().optional(),
+        dipsReps: z.number().optional(),
+        pullUpsReps: z.number().optional(),
         avatarUrl: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
@@ -239,6 +247,12 @@ export const appRouter = router({
           bench: updates.bench ? String(updates.bench) : undefined,
           deadlift: updates.deadlift ? String(updates.deadlift) : undefined,
           ohp: updates.ohp ? String(updates.ohp) : undefined,
+          farmersWalkWeight: updates.farmersWalkWeight ? String(updates.farmersWalkWeight) : undefined,
+          farmersWalkDistance: updates.farmersWalkDistance ? String(updates.farmersWalkDistance) : undefined,
+          yokeWalkWeight: updates.yokeWalkWeight ? String(updates.yokeWalkWeight) : undefined,
+          yokeWalkDistance: updates.yokeWalkDistance ? String(updates.yokeWalkDistance) : undefined,
+          dipsReps: updates.dipsReps,
+          pullUpsReps: updates.pullUpsReps,
           avatarUrl: updates.avatarUrl,
           total: newTotal,
         });
@@ -251,6 +265,12 @@ export const appRouter = router({
         bench: z.number().optional(),
         deadlift: z.number().optional(),
         ohp: z.number().optional(),
+        farmersWalkWeight: z.number().optional(),
+        farmersWalkDistance: z.number().optional(),
+        yokeWalkWeight: z.number().optional(),
+        yokeWalkDistance: z.number().optional(),
+        dipsReps: z.number().optional(),
+        pullUpsReps: z.number().optional(),
         bodyWeight: z.number().optional(),
         avatarUrl: z.string().optional(),
       }))
@@ -268,6 +288,12 @@ export const appRouter = router({
           bench: input.bench ? String(input.bench) : null,
           deadlift: input.deadlift ? String(input.deadlift) : null,
           ohp: input.ohp ? String(input.ohp) : null,
+          farmersWalkWeight: input.farmersWalkWeight ? String(input.farmersWalkWeight) : null,
+          farmersWalkDistance: input.farmersWalkDistance ? String(input.farmersWalkDistance) : null,
+          yokeWalkWeight: input.yokeWalkWeight ? String(input.yokeWalkWeight) : null,
+          yokeWalkDistance: input.yokeWalkDistance ? String(input.yokeWalkDistance) : null,
+          dipsReps: input.dipsReps,
+          pullUpsReps: input.pullUpsReps,
           bodyWeight: input.bodyWeight ? String(input.bodyWeight) : null,
           total: total > 0 ? String(total) : null,
         });
@@ -280,15 +306,21 @@ export const appRouter = router({
             { type: 'bench', val: input.bench },
             { type: 'deadlift', val: input.deadlift },
             { type: 'ohp', val: input.ohp },
+            { type: 'farmersWalk', weight: input.farmersWalkWeight, distance: input.farmersWalkDistance },
+            { type: 'yokeWalk', weight: input.yokeWalkWeight, distance: input.yokeWalkDistance },
+            { type: 'dips', reps: input.dipsReps },
+            { type: 'pullUps', reps: input.pullUpsReps },
           ];
           const dateStr = new Date().toISOString().split('T')[0];
           for (const lift of lifts) {
-            if (lift.val) {
+            const l = lift as any;
+            if (l.val || l.weight || l.distance || l.reps) {
               await addLiftRecord({
                 athleteId: athlete.id,
-                exerciseType: lift.type,
-                weight: String(lift.val),
-                reps: 1,
+                exerciseType: l.type,
+                weight: l.val || l.weight ? String(l.val || l.weight) : null,
+                reps: l.reps || 1,
+                distance: l.distance ? String(l.distance) : null,
                 recordedDate: dateStr,
               });
             }

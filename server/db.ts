@@ -253,6 +253,18 @@ export async function getLeaderboardByExercise(exerciseType: string, gymId?: num
     } else if (exerciseType === 'ohp') {
       aVal = a.ohp ? parseFloat(a.ohp) : null;
       bVal = b.ohp ? parseFloat(b.ohp) : null;
+    } else if (exerciseType === 'farmersWalk') {
+      aVal = a.farmersWalkWeight ? parseFloat(a.farmersWalkWeight) : null;
+      bVal = b.farmersWalkWeight ? parseFloat(b.farmersWalkWeight) : null;
+    } else if (exerciseType === 'yokeWalk') {
+      aVal = a.yokeWalkWeight ? parseFloat(a.yokeWalkWeight) : null;
+      bVal = b.yokeWalkWeight ? parseFloat(b.yokeWalkWeight) : null;
+    } else if (exerciseType === 'dips') {
+      aVal = a.dipsReps ? a.dipsReps : null;
+      bVal = b.dipsReps ? b.dipsReps : null;
+    } else if (exerciseType === 'pullUps') {
+      aVal = a.pullUpsReps ? a.pullUpsReps : null;
+      bVal = b.pullUpsReps ? b.pullUpsReps : null;
     } else {
       aVal = a.total ? parseFloat(a.total) : null;
       bVal = b.total ? parseFloat(b.total) : null;

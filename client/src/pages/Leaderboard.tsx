@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export default function Leaderboard() {
   const { user, isAuthenticated, logout, loading } = useAuth();
-  const [sortBy, setSortBy] = useState<"total" | "squat" | "bench" | "deadlift" | "ohp">("total");
+  const [sortBy, setSortBy] = useState<"total" | "squat" | "bench" | "deadlift" | "ohp" | "farmersWalk" | "yokeWalk" | "dips" | "pullUps">("total");
   const [selectedGymId, setSelectedGymId] = useState<number | undefined>(undefined);
   const [hasSetInitialGym, setHasSetInitialGym] = useState(false);
 
@@ -44,6 +44,10 @@ export default function Leaderboard() {
     { id: "bench", label: "Bench", icon: "💪" },
     { id: "deadlift", label: "Deadlift", icon: "🔥" },
     { id: "ohp", label: "OHP", icon: "⬆️" },
+    { id: "farmersWalk", label: "Farmers", icon: "🚜" },
+    { id: "yokeWalk", label: "Yoke", icon: "🐂" },
+    { id: "dips", label: "Dips", icon: "📉" },
+    { id: "pullUps", label: "Pull Ups", icon: "🦾" },
   ];
 
   return (
@@ -119,15 +123,15 @@ export default function Leaderboard() {
         {/* Exercise tabs */}
         <div className="mb-8">
           <Tabs value={sortBy} onValueChange={(v) => setSortBy(v as any)} className="w-full">
-            <TabsList className="grid grid-cols-2 md:grid-cols-5 gap-2 bg-card border border-border p-2 rounded-lg">
+            <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10 gap-2 bg-card border border-border p-2 rounded-lg h-auto">
               {exercises.map((ex) => (
                 <TabsTrigger
                   key={ex.id}
                   value={ex.id}
-                  className="uppercase font-bold text-xs sm:text-sm data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
+                  className="uppercase font-bold text-[10px] sm:text-xs data-[state=active]:bg-accent data-[state=active]:text-accent-foreground py-1 px-2"
                 >
                   <span className="mr-1">{ex.icon}</span>
-                  <span>{ex.label}</span>
+                  <span className="truncate">{ex.label}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -224,10 +228,14 @@ export default function Leaderboard() {
                           {athlete.deadlift || "—"}
                         </div>
                       </div>
-                      <div className={`p-2 rounded ${sortBy === 'ohp' ? 'bg-accent/10 border border-accent/20' : 'bg-muted/30'}`}>
-                        <div className="text-[10px] text-muted-foreground uppercase font-bold">OHP</div>
-                        <div className={`font-bold ${sortBy === 'ohp' ? 'text-accent' : 'text-foreground'}`}>
-                          {athlete.ohp || "—"}
+                      <div className={`p-2 rounded ${['farmersWalk', 'yokeWalk', 'dips', 'pullUps'].includes(sortBy) ? 'bg-accent/10 border border-accent/20' : 'bg-muted/30'}`}>
+                        <div className="text-[10px] text-muted-foreground uppercase font-bold">{exercises.find(e => e.id === sortBy)?.label || sortBy}</div>
+                        <div className={`font-bold ${['farmersWalk', 'yokeWalk', 'dips', 'pullUps'].includes(sortBy) ? 'text-accent' : 'text-foreground'}`}>
+                          {sortBy === 'farmersWalk' ? (athlete.farmersWalkWeight ? `${athlete.farmersWalkWeight} / ${athlete.farmersWalkDistance}m` : "—") :
+                            sortBy === 'yokeWalk' ? (athlete.yokeWalkWeight ? `${athlete.yokeWalkWeight} / ${athlete.yokeWalkDistance}m` : "—") :
+                              sortBy === 'dips' ? athlete.dipsReps :
+                                sortBy === 'pullUps' ? athlete.pullUpsReps :
+                                  "—"}
                         </div>
                       </div>
                     </div>
@@ -280,6 +288,38 @@ export default function Leaderboard() {
                       >
                         <div className="flex items-center justify-end gap-1">
                           OHP <ArrowUpDown className="w-3 h-3" />
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => setSortBy('farmersWalk' as any)}
+                        className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === ('farmersWalk' as any) ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
+                      >
+                        <div className="flex items-center justify-end gap-1 text-center leading-tight">
+                          Farmers <ArrowUpDown className="w-3 h-3" />
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => setSortBy('yokeWalk' as any)}
+                        className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === ('yokeWalk' as any) ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
+                      >
+                        <div className="flex items-center justify-end gap-1 text-center leading-tight">
+                          Yoke <ArrowUpDown className="w-3 h-3" />
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => setSortBy('dips' as any)}
+                        className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === ('dips' as any) ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          Dips <ArrowUpDown className="w-3 h-3" />
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => setSortBy('pullUps' as any)}
+                        className={`px-4 py-4 text-right text-xs font-black uppercase tracking-tighter cursor-pointer hover:bg-accent/5 transition-colors ${sortBy === ('pullUps' as any) ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground'}`}
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          Pull Ups <ArrowUpDown className="w-3 h-3" />
                         </div>
                       </th>
                       <th
@@ -349,6 +389,18 @@ export default function Leaderboard() {
                           </td>
                           <td className={`px-4 py-4 text-right text-sm font-bold ${sortBy === 'ohp' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
                             {athlete.ohp || "—"}
+                          </td>
+                          <td className={`px-4 py-4 text-right text-xs font-bold ${sortBy === 'farmersWalk' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
+                            {athlete.farmersWalkWeight ? `${athlete.farmersWalkWeight} / ${athlete.farmersWalkDistance}m` : "—"}
+                          </td>
+                          <td className={`px-4 py-4 text-right text-xs font-bold ${sortBy === 'yokeWalk' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
+                            {athlete.yokeWalkWeight ? `${athlete.yokeWalkWeight} / ${athlete.yokeWalkDistance}m` : "—"}
+                          </td>
+                          <td className={`px-4 py-4 text-right text-sm font-bold ${sortBy === 'dips' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
+                            {athlete.dipsReps || "—"}
+                          </td>
+                          <td className={`px-4 py-4 text-right text-sm font-bold ${sortBy === 'pullUps' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
+                            {athlete.pullUpsReps || "—"}
                           </td>
                           <td className={`px-4 py-4 text-right text-base font-black ${sortBy === 'total' ? 'text-accent bg-accent/10' : 'text-foreground'}`}>
                             {athlete.total || "—"}
