@@ -230,7 +230,9 @@ export const appRouter = router({
         yokeWalkWeight: z.number().optional(),
         yokeWalkDistance: z.number().optional(),
         dipsReps: z.number().optional(),
+        dipsWeight: z.number().optional(),
         pullUpsReps: z.number().optional(),
+        pullUpsWeight: z.number().optional(),
         avatarUrl: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
@@ -252,7 +254,9 @@ export const appRouter = router({
           yokeWalkWeight: updates.yokeWalkWeight ? String(updates.yokeWalkWeight) : undefined,
           yokeWalkDistance: updates.yokeWalkDistance ? String(updates.yokeWalkDistance) : undefined,
           dipsReps: updates.dipsReps,
+          dipsWeight: updates.dipsWeight ? String(updates.dipsWeight) : undefined,
           pullUpsReps: updates.pullUpsReps,
+          pullUpsWeight: updates.pullUpsWeight ? String(updates.pullUpsWeight) : undefined,
           avatarUrl: updates.avatarUrl,
           total: newTotal,
         });
@@ -270,7 +274,9 @@ export const appRouter = router({
         yokeWalkWeight: z.number().optional(),
         yokeWalkDistance: z.number().optional(),
         dipsReps: z.number().optional(),
+        dipsWeight: z.number().optional(),
         pullUpsReps: z.number().optional(),
+        pullUpsWeight: z.number().optional(),
         bodyWeight: z.number().optional(),
         avatarUrl: z.string().optional(),
       }))
@@ -293,7 +299,9 @@ export const appRouter = router({
           yokeWalkWeight: input.yokeWalkWeight ? String(input.yokeWalkWeight) : null,
           yokeWalkDistance: input.yokeWalkDistance ? String(input.yokeWalkDistance) : null,
           dipsReps: input.dipsReps,
+          dipsWeight: input.dipsWeight ? String(input.dipsWeight) : null,
           pullUpsReps: input.pullUpsReps,
+          pullUpsWeight: input.pullUpsWeight ? String(input.pullUpsWeight) : null,
           bodyWeight: input.bodyWeight ? String(input.bodyWeight) : null,
           total: total > 0 ? String(total) : null,
         });
@@ -308,8 +316,8 @@ export const appRouter = router({
             { type: 'ohp', val: input.ohp },
             { type: 'farmersWalk', weight: input.farmersWalkWeight, distance: input.farmersWalkDistance },
             { type: 'yokeWalk', weight: input.yokeWalkWeight, distance: input.yokeWalkDistance },
-            { type: 'dips', reps: input.dipsReps },
-            { type: 'pullUps', reps: input.pullUpsReps },
+            { type: 'dips', reps: input.dipsReps, weight: input.dipsWeight },
+            { type: 'pullUps', reps: input.pullUpsReps, weight: input.pullUpsWeight },
           ];
           const dateStr = new Date().toISOString().split('T')[0];
           for (const lift of lifts) {

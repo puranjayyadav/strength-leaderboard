@@ -260,11 +260,11 @@ export async function getLeaderboardByExercise(exerciseType: string, gymId?: num
       aVal = a.yokeWalkWeight ? parseFloat(a.yokeWalkWeight) : null;
       bVal = b.yokeWalkWeight ? parseFloat(b.yokeWalkWeight) : null;
     } else if (exerciseType === 'dips') {
-      aVal = a.dipsReps ? a.dipsReps : null;
-      bVal = b.dipsReps ? b.dipsReps : null;
+      aVal = a.dipsWeight ? (parseFloat(a.dipsWeight) * 1000) + (a.dipsReps || 0) : (a.dipsReps ? a.dipsReps : null);
+      bVal = b.dipsWeight ? (parseFloat(b.dipsWeight) * 1000) + (b.dipsReps || 0) : (b.dipsReps ? b.dipsReps : null);
     } else if (exerciseType === 'pullUps') {
-      aVal = a.pullUpsReps ? a.pullUpsReps : null;
-      bVal = b.pullUpsReps ? b.pullUpsReps : null;
+      aVal = a.pullUpsWeight ? (parseFloat(a.pullUpsWeight) * 1000) + (a.pullUpsReps || 0) : (a.pullUpsReps ? a.pullUpsReps : null);
+      bVal = b.pullUpsWeight ? (parseFloat(b.pullUpsWeight) * 1000) + (b.pullUpsReps || 0) : (b.pullUpsReps ? b.pullUpsReps : null);
     } else {
       aVal = a.total ? parseFloat(a.total) : null;
       bVal = b.total ? parseFloat(b.total) : null;

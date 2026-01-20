@@ -233,8 +233,8 @@ export default function Leaderboard() {
                         <div className={`font-bold ${['farmersWalk', 'yokeWalk', 'dips', 'pullUps'].includes(sortBy) ? 'text-accent' : 'text-foreground'}`}>
                           {sortBy === 'farmersWalk' ? (athlete.farmersWalkWeight ? `${athlete.farmersWalkWeight} / ${athlete.farmersWalkDistance}m` : "—") :
                             sortBy === 'yokeWalk' ? (athlete.yokeWalkWeight ? `${athlete.yokeWalkWeight} / ${athlete.yokeWalkDistance}m` : "—") :
-                              sortBy === 'dips' ? athlete.dipsReps :
-                                sortBy === 'pullUps' ? athlete.pullUpsReps :
+                              sortBy === 'dips' ? (athlete.dipsWeight ? `${athlete.dipsWeight} x ${athlete.dipsReps}` : (athlete.dipsReps || "—")) :
+                                sortBy === 'pullUps' ? (athlete.pullUpsWeight ? `${athlete.pullUpsWeight} x ${athlete.pullUpsReps}` : (athlete.pullUpsReps || "—")) :
                                   "—"}
                         </div>
                       </div>
@@ -397,10 +397,10 @@ export default function Leaderboard() {
                             {athlete.yokeWalkWeight ? `${athlete.yokeWalkWeight} / ${athlete.yokeWalkDistance}m` : "—"}
                           </td>
                           <td className={`px-4 py-4 text-right text-sm font-bold ${sortBy === 'dips' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
-                            {athlete.dipsReps || "—"}
+                            {athlete.dipsWeight ? `${athlete.dipsWeight} x ${athlete.dipsReps}` : (athlete.dipsReps || "—")}
                           </td>
                           <td className={`px-4 py-4 text-right text-sm font-bold ${sortBy === 'pullUps' ? 'text-accent bg-accent/5' : 'text-foreground/70'}`}>
-                            {athlete.pullUpsReps || "—"}
+                            {athlete.pullUpsWeight ? `${athlete.pullUpsWeight} x ${athlete.pullUpsReps}` : (athlete.pullUpsReps || "—")}
                           </td>
                           <td className={`px-4 py-4 text-right text-base font-black ${sortBy === 'total' ? 'text-accent bg-accent/10' : 'text-foreground'}`}>
                             {athlete.total || "—"}

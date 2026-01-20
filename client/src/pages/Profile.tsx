@@ -67,7 +67,9 @@ export default function Profile() {
     yokeWalkWeight: "",
     yokeWalkDistance: "",
     dipsReps: "",
+    dipsWeight: "",
     pullUpsReps: "",
+    pullUpsWeight: "",
     avatarUrl: "",
   });
 
@@ -133,7 +135,9 @@ export default function Profile() {
         yokeWalkWeight: formData.yokeWalkWeight ? parseFloat(formData.yokeWalkWeight) : undefined,
         yokeWalkDistance: formData.yokeWalkDistance ? parseFloat(formData.yokeWalkDistance) : undefined,
         dipsReps: formData.dipsReps ? parseInt(formData.dipsReps) : undefined,
+        dipsWeight: formData.dipsWeight ? parseFloat(formData.dipsWeight) : undefined,
         pullUpsReps: formData.pullUpsReps ? parseInt(formData.pullUpsReps) : undefined,
+        pullUpsWeight: formData.pullUpsWeight ? parseFloat(formData.pullUpsWeight) : undefined,
         avatarUrl: formData.avatarUrl || undefined,
       });
       setIsEditing(false);
@@ -291,7 +295,9 @@ export default function Profile() {
         yokeWalkWeight: athlete.yokeWalkWeight?.toString() || "",
         yokeWalkDistance: athlete.yokeWalkDistance?.toString() || "",
         dipsReps: athlete.dipsReps?.toString() || "",
+        dipsWeight: athlete.dipsWeight?.toString() || "",
         pullUpsReps: athlete.pullUpsReps?.toString() || "",
+        pullUpsWeight: athlete.pullUpsWeight?.toString() || "",
         avatarUrl: athlete.avatarUrl || "",
       });
     }
@@ -572,7 +578,9 @@ export default function Profile() {
                   { label: "F.Walk(D)", key: "farmersWalkDistance" },
                   { label: "Y.Walk(W)", key: "yokeWalkWeight" },
                   { label: "Y.Walk(D)", key: "yokeWalkDistance" },
+                  { label: "Dips(W)", key: "dipsWeight" },
                   { label: "Dips(R)", key: "dipsReps" },
+                  { label: "P.Ups(W)", key: "pullUpsWeight" },
                   { label: "P.Ups(R)", key: "pullUpsReps" },
                 ].map((field) => (
                   <div key={field.key}>

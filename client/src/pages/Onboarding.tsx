@@ -30,7 +30,9 @@ export default function Onboarding() {
         yokeWalkWeight: "",
         yokeWalkDistance: "",
         dipsReps: "",
+        dipsWeight: "",
         pullUpsReps: "",
+        pullUpsWeight: "",
         avatarUrl: "",
         gymInviteCode: "",
     });
@@ -133,7 +135,9 @@ export default function Onboarding() {
             yokeWalkWeight: formData.yokeWalkWeight ? parseFloat(formData.yokeWalkWeight) : undefined,
             yokeWalkDistance: formData.yokeWalkDistance ? parseFloat(formData.yokeWalkDistance) : undefined,
             dipsReps: formData.dipsReps ? parseInt(formData.dipsReps) : undefined,
+            dipsWeight: formData.dipsWeight ? parseFloat(formData.dipsWeight) : undefined,
             pullUpsReps: formData.pullUpsReps ? parseInt(formData.pullUpsReps) : undefined,
+            pullUpsWeight: formData.pullUpsWeight ? parseFloat(formData.pullUpsWeight) : undefined,
         });
     };
 
@@ -318,12 +322,32 @@ export default function Onboarding() {
                                         />
                                     </div>
                                     <div className="space-y-2">
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Dips (W)</Label>
+                                        <Input
+                                            type="number"
+                                            value={formData.dipsWeight}
+                                            onChange={(e) => setFormData({ ...formData, dipsWeight: e.target.value })}
+                                            placeholder="Lbs"
+                                            className="bg-card/50 border-border h-12"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
                                         <Label className="text-[10px] uppercase font-bold text-muted-foreground">Dips (R)</Label>
                                         <Input
                                             type="number"
                                             value={formData.dipsReps}
                                             onChange={(e) => setFormData({ ...formData, dipsReps: e.target.value })}
                                             placeholder="Reps"
+                                            className="bg-card/50 border-border h-12"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Pull Ups (W)</Label>
+                                        <Input
+                                            type="number"
+                                            value={formData.pullUpsWeight}
+                                            onChange={(e) => setFormData({ ...formData, pullUpsWeight: e.target.value })}
+                                            placeholder="Lbs"
                                             className="bg-card/50 border-border h-12"
                                         />
                                     </div>
