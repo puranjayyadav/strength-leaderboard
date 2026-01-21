@@ -88,6 +88,9 @@ export default function Profile() {
   const leaveGymMutation = trpc.gym.leave.useMutation();
   const createGymMutation = trpc.gym.create.useMutation();
 
+  const parseNumberInput = (value: string) => (value.trim() === "" ? undefined : parseFloat(value));
+  const parseIntInput = (value: string) => (value.trim() === "" ? undefined : parseInt(value, 10));
+
   const [gymInviteCode, setGymInviteCode] = useState("");
   const [isChangingGym, setIsChangingGym] = useState(false);
   const { data: gym } = trpc.gym.getById.useQuery(
@@ -125,19 +128,19 @@ export default function Profile() {
       await updateProfileMutation.mutateAsync({
         athleteId,
         name: formData.name || undefined,
-        bodyWeight: formData.bodyWeight ? parseFloat(formData.bodyWeight) : undefined,
-        squat: formData.squat ? parseFloat(formData.squat) : undefined,
-        bench: formData.bench ? parseFloat(formData.bench) : undefined,
-        deadlift: formData.deadlift ? parseFloat(formData.deadlift) : undefined,
-        ohp: formData.ohp ? parseFloat(formData.ohp) : undefined,
-        farmersWalkWeight: formData.farmersWalkWeight ? parseFloat(formData.farmersWalkWeight) : undefined,
-        farmersWalkDistance: formData.farmersWalkDistance ? parseFloat(formData.farmersWalkDistance) : undefined,
-        yokeWalkWeight: formData.yokeWalkWeight ? parseFloat(formData.yokeWalkWeight) : undefined,
-        yokeWalkDistance: formData.yokeWalkDistance ? parseFloat(formData.yokeWalkDistance) : undefined,
-        dipsReps: formData.dipsReps ? parseInt(formData.dipsReps) : undefined,
-        dipsWeight: formData.dipsWeight ? parseFloat(formData.dipsWeight) : undefined,
-        pullUpsReps: formData.pullUpsReps ? parseInt(formData.pullUpsReps) : undefined,
-        pullUpsWeight: formData.pullUpsWeight ? parseFloat(formData.pullUpsWeight) : undefined,
+        bodyWeight: parseNumberInput(formData.bodyWeight),
+        squat: parseNumberInput(formData.squat),
+        bench: parseNumberInput(formData.bench),
+        deadlift: parseNumberInput(formData.deadlift),
+        ohp: parseNumberInput(formData.ohp),
+        farmersWalkWeight: parseNumberInput(formData.farmersWalkWeight),
+        farmersWalkDistance: parseNumberInput(formData.farmersWalkDistance),
+        yokeWalkWeight: parseNumberInput(formData.yokeWalkWeight),
+        yokeWalkDistance: parseNumberInput(formData.yokeWalkDistance),
+        dipsReps: parseIntInput(formData.dipsReps),
+        dipsWeight: parseNumberInput(formData.dipsWeight),
+        pullUpsReps: parseIntInput(formData.pullUpsReps),
+        pullUpsWeight: parseNumberInput(formData.pullUpsWeight),
         avatarUrl: formData.avatarUrl || undefined,
       });
       setIsEditing(false);

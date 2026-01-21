@@ -239,24 +239,24 @@ export const appRouter = router({
         await enforceAthleteOwnership(input.athleteId, ctx.user);
         const { athleteId, ...updates } = input;
         let newTotal: string | null | undefined = undefined;
-        if (updates.squat && updates.bench && updates.deadlift) {
+        if (updates.squat !== undefined && updates.bench !== undefined && updates.deadlift !== undefined) {
           newTotal = String(updates.squat + updates.bench + updates.deadlift);
         }
         return updateAthlete(athleteId, {
           name: updates.name,
-          bodyWeight: updates.bodyWeight ? String(updates.bodyWeight) : undefined,
-          squat: updates.squat ? String(updates.squat) : undefined,
-          bench: updates.bench ? String(updates.bench) : undefined,
-          deadlift: updates.deadlift ? String(updates.deadlift) : undefined,
-          ohp: updates.ohp ? String(updates.ohp) : undefined,
-          farmersWalkWeight: updates.farmersWalkWeight ? String(updates.farmersWalkWeight) : undefined,
-          farmersWalkDistance: updates.farmersWalkDistance ? String(updates.farmersWalkDistance) : undefined,
-          yokeWalkWeight: updates.yokeWalkWeight ? String(updates.yokeWalkWeight) : undefined,
-          yokeWalkDistance: updates.yokeWalkDistance ? String(updates.yokeWalkDistance) : undefined,
+          bodyWeight: updates.bodyWeight !== undefined ? String(updates.bodyWeight) : undefined,
+          squat: updates.squat !== undefined ? String(updates.squat) : undefined,
+          bench: updates.bench !== undefined ? String(updates.bench) : undefined,
+          deadlift: updates.deadlift !== undefined ? String(updates.deadlift) : undefined,
+          ohp: updates.ohp !== undefined ? String(updates.ohp) : undefined,
+          farmersWalkWeight: updates.farmersWalkWeight !== undefined ? String(updates.farmersWalkWeight) : undefined,
+          farmersWalkDistance: updates.farmersWalkDistance !== undefined ? String(updates.farmersWalkDistance) : undefined,
+          yokeWalkWeight: updates.yokeWalkWeight !== undefined ? String(updates.yokeWalkWeight) : undefined,
+          yokeWalkDistance: updates.yokeWalkDistance !== undefined ? String(updates.yokeWalkDistance) : undefined,
           dipsReps: updates.dipsReps,
-          dipsWeight: updates.dipsWeight ? String(updates.dipsWeight) : undefined,
+          dipsWeight: updates.dipsWeight !== undefined ? String(updates.dipsWeight) : undefined,
           pullUpsReps: updates.pullUpsReps,
-          pullUpsWeight: updates.pullUpsWeight ? String(updates.pullUpsWeight) : undefined,
+          pullUpsWeight: updates.pullUpsWeight !== undefined ? String(updates.pullUpsWeight) : undefined,
           avatarUrl: updates.avatarUrl,
           total: newTotal,
         });
@@ -290,19 +290,19 @@ export const appRouter = router({
           name: input.name,
           email: ctx.user.email,
           avatarUrl: input.avatarUrl,
-          squat: input.squat ? String(input.squat) : null,
-          bench: input.bench ? String(input.bench) : null,
-          deadlift: input.deadlift ? String(input.deadlift) : null,
-          ohp: input.ohp ? String(input.ohp) : null,
-          farmersWalkWeight: input.farmersWalkWeight ? String(input.farmersWalkWeight) : null,
-          farmersWalkDistance: input.farmersWalkDistance ? String(input.farmersWalkDistance) : null,
-          yokeWalkWeight: input.yokeWalkWeight ? String(input.yokeWalkWeight) : null,
-          yokeWalkDistance: input.yokeWalkDistance ? String(input.yokeWalkDistance) : null,
+          squat: input.squat !== undefined ? String(input.squat) : null,
+          bench: input.bench !== undefined ? String(input.bench) : null,
+          deadlift: input.deadlift !== undefined ? String(input.deadlift) : null,
+          ohp: input.ohp !== undefined ? String(input.ohp) : null,
+          farmersWalkWeight: input.farmersWalkWeight !== undefined ? String(input.farmersWalkWeight) : null,
+          farmersWalkDistance: input.farmersWalkDistance !== undefined ? String(input.farmersWalkDistance) : null,
+          yokeWalkWeight: input.yokeWalkWeight !== undefined ? String(input.yokeWalkWeight) : null,
+          yokeWalkDistance: input.yokeWalkDistance !== undefined ? String(input.yokeWalkDistance) : null,
           dipsReps: input.dipsReps,
-          dipsWeight: input.dipsWeight ? String(input.dipsWeight) : null,
+          dipsWeight: input.dipsWeight !== undefined ? String(input.dipsWeight) : null,
           pullUpsReps: input.pullUpsReps,
-          pullUpsWeight: input.pullUpsWeight ? String(input.pullUpsWeight) : null,
-          bodyWeight: input.bodyWeight ? String(input.bodyWeight) : null,
+          pullUpsWeight: input.pullUpsWeight !== undefined ? String(input.pullUpsWeight) : null,
+          bodyWeight: input.bodyWeight !== undefined ? String(input.bodyWeight) : null,
           total: total > 0 ? String(total) : null,
         });
 
